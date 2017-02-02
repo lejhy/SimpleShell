@@ -1,3 +1,1 @@
-Hello Im Fraser
-
-Hello Im Kuba
+We can write TODO stuff here... or basicaly any information
