@@ -9,13 +9,13 @@ void exitProgram(int argc, char **argv);
 
 //List of built in commands in the shell
 //If the command is not here, it is either an external program or an error
-char **commands = {
+char *commands[] = {
     "print",
-    "help",
-    "exit"
+	"help",
+	"exit"
 };
 //Pointers to those built in commands
-void(*functions[]) (int argc, char **argv) = {
+void (*functions[]) (int argc, char **argv) = {
     print,
     help,
     exitProgram
@@ -41,11 +41,11 @@ int main(int argc, char **argv)
     int commandIndex;
 
     while(1){
-        printf("\r\n>");
+        printf(">");
         gets(buffer);
         tokens = tokenize(buffer);
         i = 0;
-        while (tokens[i] != null){
+        while (tokens[i] != NULL){
         	i++;
         }
         if (i > 0){
@@ -98,7 +98,7 @@ char **tokenize(char *string) {
 }
 
 void help(int argc, char **argv) {
-	printf("HELP! I need somebody. HELP! Not just anybody.\r\n\r\n");
+	printf("HELP! I need somebody. HELP! Not just anybody.\r\n");
 }
 
 void print(int argc, char **argv) {
@@ -106,7 +106,7 @@ void print(int argc, char **argv) {
 		printf(argv[0]);
 	}
 	else {
-		printf("I don't know what to print...");
+		printf("I don't know what to print...\r\n");
 	}
 }
 
