@@ -1,1 +1,2 @@
-We can write TODO stuff here... or basicaly any information
+
+CS210 - Simple Shell Assignment
