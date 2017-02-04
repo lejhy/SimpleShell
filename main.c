@@ -37,28 +37,32 @@ int main(int argc, char **argv)
     char buffer[BUFF_SIZE];
     char **tokens;
     int functionIndex;
-    int i;
+    int argumentsIndex;
     int commandIndex;
 
+	//Main loop
     while(1){
         printf(">");
         gets(buffer);
         tokens = tokenize(buffer);
-        i = 0;
-        while (tokens[i] != NULL){
-        	i++;
-        }
-        if (i > 0){
+		argumentsIndex = 0;
+		while (tokens[argumentsIndex] != NULL) {
+			argumentsIndex++;
+		}
+        if (argumentsIndex > 0){
             commandIndex = getCommandIndex(tokens[0]);
+
             if (commandIndex >= 0){
-                (functions[commandIndex]) (i - 1, ++tokens);
+                (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
             }
         }
     }
     return 0;
 }
 
-
+//Checks whether the given string is a built in command
+//Returns the command index
+//Returns negative value if no match was found
 int getCommandIndex(char *command) {
 	int i = 0;
 	while (commands[i] != NULL) {
@@ -70,19 +74,21 @@ int getCommandIndex(char *command) {
 	return -1;
 }
 
-
+//Splits the input into an array of strings and returns it as a pointer
 char **tokenize(char *string) {
-	//printf("debugTokenize");
 	int index = 0;
 	int i;
 	int size = 8;
 	char **tokens = malloc(size * sizeof(char*));
 	char **tokensTemp;
+	//Get the first token
 	char *token = strtok(string, " ");
+	//Get all the remaining tokens
 	while (token != NULL) {
 		tokens[index] = token;
 		token = strtok(NULL, " ");
 		index++;
+		//Checks whether more memory is needed and then allocates it
 		if (index == size - 1) {
 			tokensTemp = tokens;
 			tokens = malloc(2 * size * sizeof(char*));
@@ -93,10 +99,12 @@ char **tokenize(char *string) {
 			size = size * 2;
 		}
 	}
+	//Last pointer is set to NULL and the pointer to the array is returned
 	tokens[index] = NULL;
 	return tokens;
 }
 
+//All the buid in commands should be declared here
 void help(int argc, char **argv) {
 	printf("HELP! I need somebody. HELP! Not just anybody.\r\n");
 }
