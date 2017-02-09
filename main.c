@@ -5,6 +5,12 @@
 
 #define BUFF_SIZE 512
 
+void cd(int argc, char **argv);
+void getPath(int argc, char **argv);
+void setPath(int argc, char **argv);
+void history(int argc, char **argv);
+void alias(int argc, char **argv);
+void unalias(int argc, char **argv);
 void help(int argc, char **argv);
 void print(int argc, char **argv);
 void exitProgram(int argc, char **argv);
@@ -12,6 +18,15 @@ void exitProgram(int argc, char **argv);
 //List of built in commands in the shell
 //If the command is not here, it is either an external program or an error
 char *commands[] = {
+  "cd",
+  "getpath";
+  "setpath";
+  "history";
+  // "!!";
+  // "!<no>";
+  // "!-<no>";
+  "alias";
+  "unalias";
   "print",
 	"help",
 	"exit",
@@ -19,9 +34,16 @@ char *commands[] = {
 };
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
-    print,
-    help,
-    exitProgram
+  cd,
+  getPath,
+  setPath,
+  history,
+  alias,
+  unalias,
+  print,
+  help,
+  exitProgram
+
 };
 
 //Returns the index of
@@ -61,6 +83,8 @@ int main(int argc, char **argv)
 
               if (commandIndex >= 0){
                   (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
+              } else {
+                //external exec goes here
               }
           }
     }
@@ -113,7 +137,11 @@ char **tokenize(char *string) {
 
 //All the buid in commands should be declared here
 void help(int argc, char **argv) {
-	printf("HELP! I need somebody. HELP! Not just anybody.\r\n");
+  if (argc = 0){
+	  printf("HELP! I need somebody. HELP! Not just anybody.\r\n");
+  } else {
+    printf("Invalid arguments");
+  }
 }
 
 void print(int argc, char **argv) {
@@ -127,5 +155,29 @@ void print(int argc, char **argv) {
 }
 
 void exitProgram(int argc, char **argv) {
-	exit(0);
+  if (argc = 0){
+	  exit(0);
+  } else {
+    printf("Invalid arguments");
+  }
+}
+
+void cd(int argc, char **argv){
+
+}
+
+void getPath(int argc, char **argv){
+
+}
+void setPath(int argc, char **argv){
+
+}
+void history(int argc, char **argv){
+
+}
+void alias(int argc, char **argv){
+
+}
+void unalias(int argc, char **argv){
+
 }
