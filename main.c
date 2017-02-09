@@ -117,7 +117,9 @@ void help(int argc, char **argv) {
 
 void print(int argc, char **argv) {
 	if (argc > 0) {
+        printf("'");
 		printf(argv[0]);
+         printf("'");
         printf("\r\n");
 	}
 	else {
