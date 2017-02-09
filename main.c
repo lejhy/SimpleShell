@@ -5,6 +5,8 @@
 
 #define BUFF_SIZE 512
 
+char path[128];
+
 void cd(int argc, char **argv);
 void getPath(int argc, char **argv);
 void setPath(int argc, char **argv);
@@ -19,19 +21,20 @@ void exitProgram(int argc, char **argv);
 //If the command is not here, it is either an external program or an error
 char *commands[] = {
   "cd",
-  "getpath";
-  "setpath";
-  "history";
-  // "!!";
-  // "!<no>";
-  // "!-<no>";
-  "alias";
-  "unalias";
+  "getpath",
+  "setpath",
+  "history",
+  // "!!",
+  // "!<no>",
+  // "!-<no>",
+  "alias",
+  "unalias",
   "print",
 	"help",
 	"exit",
 	NULL
 };
+
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
   cd,
@@ -60,7 +63,6 @@ char **tokenize(char* string);
 int main(int argc, char **argv)
 {
     char buffer[BUFF_SIZE];
-    char path[128];
     char **tokens;
     int functionIndex;
     int argumentsIndex;
@@ -84,7 +86,8 @@ int main(int argc, char **argv)
               if (commandIndex >= 0){
                   (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
               } else {
-                //external exec goes here
+                fork();
+		exec();
               }
           }
     }
@@ -163,11 +166,11 @@ void exitProgram(int argc, char **argv) {
 }
 
 void cd(int argc, char **argv){
-
+	
 }
 
 void getPath(int argc, char **argv){
-
+	printf("%s\n", path);
 }
 void setPath(int argc, char **argv){
 
