@@ -5,6 +5,8 @@
 
 #define BUFF_SIZE 512
 
+char path[128];
+
 void cd(int argc, char **argv);
 void getPath(int argc, char **argv);
 void setPath(int argc, char **argv);
@@ -32,6 +34,7 @@ char *commands[] = {
 	"exit",
 	NULL
 };
+
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
   cd,
@@ -60,7 +63,6 @@ char **tokenize(char* string);
 int main(int argc, char **argv)
 {
     char buffer[BUFF_SIZE];
-    char path[128];
     char **tokens;
     int functionIndex;
     int argumentsIndex;
@@ -183,7 +185,7 @@ void cd(int argc, char **argv){
 }
 
 void getPath(int argc, char **argv){
-
+	printf("%s\n", path);
 }
 void setPath(int argc, char **argv){
 
