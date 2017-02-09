@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BUFF_SIZE 512
 
@@ -10,7 +11,7 @@ void exitProgram(int argc, char **argv);
 //List of built in commands in the shell
 //If the command is not here, it is either an external program or an error
 char *commands[] = {
-    "print",
+  "print",
 	"help",
 	"exit",
 	NULL
@@ -43,22 +44,24 @@ int main(int argc, char **argv)
 
 	//Main loop
     while(1){
-        printf(">");
-		if (gets(buffer) == NULL) {
-			exit(0);
-		}
-        tokens = tokenize(buffer);
-		argumentsIndex = 0;
-		while (tokens[argumentsIndex] != NULL) {
-			argumentsIndex++;
-		}
-        if (argumentsIndex > 0){
-            commandIndex = getCommandIndex(tokens[0]);
+      printf(">");
+      fgets(buffer, 512, stdin);
+  		if ( buffer[0] == NULL) {
+  			exit(0);
+  		}
+      fflush(stdout);
+      tokens = tokenize(buffer);
+  		argumentsIndex = 0;
+  		while (tokens[argumentsIndex] != NULL) {
+  			argumentsIndex++;
+  		}
+          if (argumentsIndex > 0){
+              commandIndex = getCommandIndex(tokens[0]);
 
-            if (commandIndex >= 0){
-                (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
-            }
-        }
+              if (commandIndex >= 0){
+                  (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
+              }
+          }
     }
     return 0;
 }
