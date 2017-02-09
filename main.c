@@ -19,14 +19,14 @@ void exitProgram(int argc, char **argv);
 //If the command is not here, it is either an external program or an error
 char *commands[] = {
   "cd",
-  "getpath";
-  "setpath";
-  "history";
-  // "!!";
-  // "!<no>";
-  // "!-<no>";
-  "alias";
-  "unalias";
+  "getpath",
+  "setpath",
+  "history",
+  // "!!",
+  // "!<no>",
+  // "!-<no>",
+  "alias",
+  "unalias",
   "print",
 	"help",
 	"exit",
@@ -65,6 +65,7 @@ int main(int argc, char **argv)
     int functionIndex;
     int argumentsIndex;
     int commandIndex;
+    pid_t processID;
 
 	//Main loop
     while(1){
@@ -80,11 +81,26 @@ int main(int argc, char **argv)
   		}
           if (argumentsIndex > 0){
               commandIndex = getCommandIndex(tokens[0]);
-
               if (commandIndex >= 0){
-                  (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
+                (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
               } else {
-                //external exec goes here
+                processID = getpid();
+                fork();
+                if(processID == getpid()){
+                  //parent
+                  wait();
+                } else {
+                  //child
+                  //This part needs fixing
+                  if (execv(path, tokens) == -1){
+                    int j =0;
+                    while (tokens[j] != NULL){
+                      printf("%s\n", tokens[j]);
+                      j++;
+                    }
+                    exit(0);
+                  }
+                }
               }
           }
     }
@@ -137,7 +153,7 @@ char **tokenize(char *string) {
 
 //All the buid in commands should be declared here
 void help(int argc, char **argv) {
-  if (argc = 0){
+  if (argc == 0){
 	  printf("HELP! I need somebody. HELP! Not just anybody.\r\n");
   } else {
     printf("Invalid arguments");
@@ -155,7 +171,7 @@ void print(int argc, char **argv) {
 }
 
 void exitProgram(int argc, char **argv) {
-  if (argc = 0){
+  if (argc == 0){
 	  exit(0);
   } else {
     printf("Invalid arguments");
