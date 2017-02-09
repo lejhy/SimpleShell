@@ -12,7 +12,8 @@ void exitProgram(int argc, char **argv);
 char *commands[] = {
     "print",
 	"help",
-	"exit"
+	"exit",
+	NULL
 };
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
@@ -43,7 +44,9 @@ int main(int argc, char **argv)
 	//Main loop
     while(1){
         printf(">");
-        gets(buffer);
+		if (gets(buffer) == NULL) {
+			exit(0);
+		}
         tokens = tokenize(buffer);
 		argumentsIndex = 0;
 		while (tokens[argumentsIndex] != NULL) {
