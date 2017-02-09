@@ -38,6 +38,7 @@ char **tokenize(char* string);
 int main(int argc, char **argv)
 {
     char buffer[BUFF_SIZE];
+    char path[128];
     char **tokens;
     int functionIndex;
     int argumentsIndex;
@@ -45,8 +46,8 @@ int main(int argc, char **argv)
 
 	//Main loop
     while(1){
-      printf(">");
-      system("pwd");
+      getcwd(path, 128);
+      printf("%s>", path);
   		if (fgets(buffer, 512, stdin) == NULL) {
   			exit(0);
   		}
@@ -88,11 +89,11 @@ char **tokenize(char *string) {
 	char **tokens = malloc(size * sizeof(char*));
 	char **tokensTemp;
 	//Get the first token
-	char *token = strtok(string, "[ \t|<>&;\n]");
+	char *token = strtok(string, "[\n<>;|& \t]");
 	//Get all the remaining tokens
 	while (token != NULL) {
 		tokens[index] = token;
-		token = strtok(NULL, " ");
+		token = strtok(NULL, "[\n<>;|& \t]");
 		index++;
 		//Checks whether more memory is needed and then allocates it
 		if (index == size - 1) {
@@ -116,14 +117,12 @@ void help(int argc, char **argv) {
 }
 
 void print(int argc, char **argv) {
-	if (argc > 0) {
-        printf("'");
-		printf(argv[0]);
-         printf("'");
-        printf("\r\n");
-	}
-	else {
-		printf("I don't know what to print...\r\n");
+  int i = 0;
+	for (i; i < argc;i++) {
+    printf("'");
+		printf(argv[i]);
+    printf("'");
+    printf("\r\n");
 	}
 }
 
