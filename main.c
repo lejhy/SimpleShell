@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define BUFF_SIZE 512
 
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
 	//Main loop
     while(1){
       printf(">");
+      system("pwd");
   		if (fgets(buffer, 512, stdin) == NULL) {
   			exit(0);
   		}
