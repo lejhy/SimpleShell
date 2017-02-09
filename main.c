@@ -50,10 +50,10 @@ int main(int argc, char **argv)
       
       printf(">");
         system("pwd");
-      fgets(buffer, 512, stdin);
-  		if ( buffer[0] == NULL) {
+  		if (fgets(buffer, 512, stdin) == NULL) {
   			exit(0);
   		}
+      printf("%d %d", buffer[0], buffer[1]);
       fflush(stdout);
       tokens = tokenize(buffer);
   		argumentsIndex = 0;
