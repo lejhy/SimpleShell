@@ -115,6 +115,7 @@ void help(int argc, char **argv) {
 void print(int argc, char **argv) {
 	if (argc > 0) {
 		printf(argv[0]);
+        printf("\r\n");
 	}
 	else {
 		printf("I don't know what to print...\r\n");
