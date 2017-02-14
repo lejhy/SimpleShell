@@ -90,7 +90,7 @@ int main(int argc, char **argv)
                 fork();
                 if(processID == getpid()){
                   //parent
-                  wait();
+                  wait(0);
                 } else {
                   //child
                   //This part needs fixing
@@ -164,12 +164,13 @@ void help(int argc, char **argv) {
 
 void print(int argc, char **argv) {
   int i = 0;
+     printf("'");
 	for (i; i < argc;i++) {
-    printf("'");
-		printf(argv[i]);
-    printf("'");
-    printf("\r\n");
+   		printf(argv[i]);
+        printf(" ");
 	}
+    printf("'");
+     printf("\r\n");
 }
 
 void exitProgram(int argc, char **argv) {
