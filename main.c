@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #define BUFF_SIZE 512
+#define historySize 20
 
 char path[128];
 
@@ -30,9 +31,9 @@ char *commands[] = {
   "alias",
   "unalias",
   "print",
-	"help",
-	"exit",
-	NULL
+  "help",
+  "exit",
+  NULL
 };
 
 //Pointers to those built in commands
@@ -46,7 +47,6 @@ void (*functions[]) (int argc, char **argv) = {
   print,
   help,
   exitProgram
-
 };
 
 //Returns the index of
@@ -57,8 +57,9 @@ int getCommandIndex(char* command);
 //If there are no arguments, only one element wide array with the last NULL pointer is returned
 char **tokenize(char* string);
 
-
-
+char *historyArray[historySize];
+int historyCounter = 0;
+int historyArrayCounter = 0;
 
 int main(int argc, char **argv)
 {
@@ -73,9 +74,20 @@ int main(int argc, char **argv)
     while(1){
       getcwd(path, 128);
       printf("%s>", path);
+      //check for ctrl-D
   		if (fgets(buffer, 512, stdin) == NULL) {
   			exit(0);
-  		}
+      }
+
+      //check fo history
+      //This part needs fixing
+      if (buffer[0] != NULL) {
+        historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
+        strcpy(historyArray[historyCounter], buffer);
+        historyCounter++;
+        historyArrayCounter = historyCounter%historySize;
+      }
+
       tokens = tokenize(buffer);
   		argumentsIndex = 0;
   		while (tokens[argumentsIndex] != NULL) {
@@ -93,7 +105,6 @@ int main(int argc, char **argv)
                   wait(0);
                 } else {
                   //child
-                  //This part needs fixing
                   if (execvp(tokens[0], tokens) == -1){
                     int j =0;
                     while (tokens[j] != NULL){
@@ -192,7 +203,14 @@ void setPath(int argc, char **argv){
 
 }
 void history(int argc, char **argv){
-
+  if (argc == 0){
+	  for(int i = 0; i < historyArrayCounter; i++){
+      printf("%s",historyArray[i]);
+    }
+    printf("%d%d%d\n",historySize, historyCounter, historyArrayCounter );
+  } else {
+    printf("Invalid arguments");
+  }
 }
 void alias(int argc, char **argv){
 
