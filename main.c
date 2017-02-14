@@ -108,7 +108,9 @@ int main(int argc, char **argv)
                   if (execvp(tokens[0], tokens) == -1){
                     int j =0;
                     while (tokens[j] != NULL){
-                      printf("%s\n", tokens[j]);
+			printf("error: '");
+                      printf("%s", tokens[j]);
+			printf("'\n");
                       j++;
                     }
                     exit(0);
