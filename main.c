@@ -94,7 +94,7 @@ int main(int argc, char **argv)
                 } else {
                   //child
                   //This part needs fixing
-                  if (execv(path, tokens) == -1){
+                  if (execvp(tokens[0], tokens) == -1){
                     int j =0;
                     while (tokens[j] != NULL){
                       printf("%s\n", tokens[j]);
