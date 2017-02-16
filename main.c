@@ -194,54 +194,13 @@ void exitProgram(int argc, char **argv) {
 }
 
 void cd(int argc, char **argv){
-  int directoryFound = 0;
-  int i;
-	if (argc > 0){
-    size_t count = 0;
-    size_t length = 0;
-    struct dirent *entryPointer = NULL;
-    char **files = NULL;
-
-    DIR *directoryPointer = NULL;
-    directoryPointer = opendir(path);
-
-    if(directoryPointer == NULL) {
-        printf("no such directory: '%s'", path);
-        return 0;
-    }
-
-    entryPointer = readdir(directoryPointer);
-    while(entryPointer != NULL){
-        count++;
-        entryPointer = readdir(directoryPointer);
-    }
-
-    files = calloc(count, sizeof(char *));
-    count = 0;
-    rewinddir(directoryPointer);
-
-    entryPointer = readdir(directoryPointer);
-    while(entryPointer != NULL){
-        (files)[count++] = strdup(entryPointer->d_name);
-        entryPointer = readdir(directoryPointer);
-    }
-
-    rewinddir(directoryPointer);
-    closedir(directoryPointer);
-
-    for(int i = 0; i < count; i++) {
-  		if(strcmp(argv[0], files[i]) == 0) {
-  			chdir(files[i]);
-        directoryFound = 1;
-  		}
-  	}
-    if(!directoryFound){
-      perror("No such directory");
-    }
-	} else {
-		printf("Not enough arguments required for this command to run\n");
-	}
-}
+		if (argc == 0){
+			chdir(path);
+		} else if(argc == 1) {
+			chdir(argv[argc-1]);
+		} else {
+			perror("Error");
+		}
 
 void getPath(int argc, char **argv){
 	printf("%s\n", path);
