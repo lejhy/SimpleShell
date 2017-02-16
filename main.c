@@ -5,6 +5,7 @@
 #include <dirent.h>
 
 #define BUFF_SIZE 512
+#define historySize 20
 
 char path[128];
 // make these variables global for now
@@ -26,16 +27,16 @@ void printdir(int argc, char **argv);
 //List of built in commands in the shell
 //If the command is not here, it is either an external program or an error
 char *commands[] = {
-  "cd",
-  "getpath",
-  "setpath",
-  "history",
-  // "!!",
-  // "!<no>",int chdir(const char *path); 
-  // "!-<no>",
-  "alias",
-  "unalias",
-  "print",
+	"cd",
+	"getpath",
+	"setpath",
+	"history",
+	// "!!",
+	// "!<no>",int chdir(const char *path); 
+	// "!-<no>",
+	"alias",
+	"unalias",
+	"print",
 	"help",
 	"exit",
 	"printdir",
@@ -54,7 +55,6 @@ void (*functions[]) (int argc, char **argv) = {
   help,
   exitProgram,
   printdir
-
 };
 
 //Returns the index of
@@ -66,6 +66,9 @@ int getCommandIndex(char* command);
 char **tokenize(char* string);
 
 char printContents(const char *path, char ***ls);
+char *historyArray[historySize];
+int historyCounter = 0;
+int historyArrayCounter = 0;
 
 int main(int argc, char **argv)
 {
@@ -80,9 +83,19 @@ int main(int argc, char **argv)
     while(1){
       getcwd(path, 128);
       printf("%s>", path);
-  		if (fgets(buffer, 512, stdin) == NULL) {
-  			exit(0);
-  		}
+      //check for ctrl-D
+	if (fgets(buffer, 512, stdin) == NULL) {
+		exit(0);
+	}
+
+      //check fo history
+      //This part needs fixing
+      if (buffer[0] != NULL) {
+        historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
+        strcpy(historyArray[historyCounter], buffer);
+        historyCounter++;
+        historyArrayCounter = historyCounter%historySize;
+      }
 
       tokens = tokenize(buffer);
   		argumentsIndex = 0;
@@ -98,14 +111,15 @@ int main(int argc, char **argv)
                 fork();
                 if(processID == getpid()){
                   //parent
-                  wait();
+                  wait(0);
                 } else {
                   //child
-                  //This part needs fixing
-                  if (execv(path, tokens) == -1){
+                  if (execvp(tokens[0], tokens) == -1){
                     int j =0;
                     while (tokens[j] != NULL){
-                      printf("%s\n", tokens[j]);
+			printf("error: '");
+                      printf("%s", tokens[j]);
+			printf("'\n");
                       j++;
                     }
                     exit(0);
@@ -171,12 +185,12 @@ void help(int argc, char **argv) {
 }
 
 void print(int argc, char **argv) {
-  int i = 0;
+	int i = 0;
 	for (i; i < argc;i++) {
-    printf("'");
+		printf("'");
 		printf("%s", argv[i]);
-    printf("'");
-    printf("\r\n");
+		printf("'");
+		printf("\r\n");
 	}
 }
 
@@ -244,7 +258,14 @@ void setPath(int argc, char **argv){
 
 }
 void history(int argc, char **argv){
-
+  if (argc == 0){
+	  for(int i = 0; i < historyArrayCounter; i++){
+      printf("%s",historyArray[i]);
+    }
+    printf("%d%d%d\n",historySize, historyCounter, historyArrayCounter );
+  } else {
+    printf("Invalid arguments");
+  }
 }
 void alias(int argc, char **argv){
 
