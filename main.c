@@ -278,17 +278,18 @@ void history(int argc, char **argv){
 }
 
 
-void alias(int argc, char **argv){
-for(int i = 0; alias[i].alias != null; i++)
-	{
-	// do nothing
-	}
-else if(int i = 0; alias[i].alias = alias[i].command; i++)
-	{
-		print("element %d is correct", i);
-	}
+ void alias(int argc, char **argv){
+// for(int i = 0; alias[i].alias != null; i++)
+// 	{
+// 	// do nothing
+// 	}
+// else if(int i = 0; alias[i].alias = alias[i].command; i++)
+// 	{
+// 		print("element %d is correct", i);
+// 	}
+//
+ }
 
-}
 void unalias(int argc, char **argv){
 
 }
