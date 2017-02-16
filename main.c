@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define BUFF_SIZE 512
 #define historySize 20
@@ -42,6 +44,8 @@ char *commands[] = {
 	"printdir",
 	NULL
 };
+
+/*
 typedef struct {
 	String alias;
 	String command;
@@ -50,6 +54,7 @@ typedef struct {
 aliasElement *alias[] = {
 
 }
+*/
 
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
@@ -87,64 +92,58 @@ int main(int argc, char **argv)
     int commandIndex;
     pid_t processID;
 
-	//Main loop
-  while(1){
-    getcwd(path, 128);
-    printf("%s>", path);
-    //check for ctrl-D
-  	if (fgets(buffer, 512, stdin) == NULL) {
-  		exit(0);
-  	}
+		//get the paths of the current working directory and home directory
+		strcpy(path, getenv("HOME"));
+		chdir(path);
+		//Main loop
+	  while(1){
+	    printf("%s>", path);
 
-    //check fo history
-    //This part needs fixing
-    if (buffer[0] != NULL) {
-      historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
-      strcpy(historyArray[historyArrayCounter], buffer);
-      historyCounter++;
-      historyArrayCounter = historyCounter%historySize;
-    }
+	    //check for ctrl-D (EOF)
+	  	if (fgets(buffer, 512, stdin) == NULL) {
+				printf("\n");
+	  		exit(0);
+	  	}
 
-      //check fo history
-      //This part needs fixing
-      if (buffer[0] != NULL) {
-        historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
-        strcpy(historyArray[historyCounter], buffer);
-        historyCounter++;
-        historyArrayCounter = historyCounter%historySize;
-      }
-
-      tokens = tokenize(buffer);
-  		argumentsIndex = 0;
-  		while (tokens[argumentsIndex] != NULL) {
-  			argumentsIndex++;
-  		}
-          if (argumentsIndex > 0){
-              commandIndex = getCommandIndex(tokens[0]);
-              if (commandIndex >= 0){
-                (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
-              } else {
-                processID = getpid();
-                fork();
-                if(processID == getpid()){
-                  //parent
-                  wait(0);
-                } else {
-                  //child
-                  if (execvp(tokens[0], tokens) == -1){
-                    int j =0;
-                    while (tokens[j] != NULL){
-			printf("error: '");
-                      printf("%s", tokens[j]);
-			printf("'\n");
-                      j++;
-                    }
-                    exit(0);
-                  }
-                }
-              }
-          }
-    }
+	    /*
+	    //check fo history
+	    //This part needs fixing
+	    if (buffer[0] != NULL) {
+	      historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
+	      strcpy(historyArray[historyArrayCounter], buffer);
+	      historyCounter++;
+	      historyArrayCounter = historyCounter%historySize;
+	    }
+				*/
+	      tokens = tokenize(buffer);
+	  		argumentsIndex = 0;
+	  		while (tokens[argumentsIndex] != NULL) {
+	  			argumentsIndex++;
+	  		}
+	          if (argumentsIndex > 0){
+	              commandIndex = getCommandIndex(tokens[0]);
+	              if (commandIndex >= 0){
+	                (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
+	              } else {
+	                processID = getpid();
+	                fork();
+	                if(processID == getpid()){
+	                  //parent
+	                  wait(NULL);
+	                } else {
+	                  //child
+	                  if (execvp(tokens[0], tokens) < 0){
+	                    int j =0;
+	                    while (tokens[j] != NULL){
+												printf("error: '%s'\n",tokens[j]);
+	                      j++;
+	                    }
+	                    exit(0);
+	                  }
+	                }
+	              }
+	          }
+	    }
     return 0;
 }
 
@@ -253,12 +252,28 @@ char printContents(const char *path, char ***ls) {
     closedir(dp);
     return count;
 }
-
+/*
+TO-DO:
+cd -
+*/
 void cd(int argc, char **argv){
+	char newPath[400];
 	if (argc == 0){
-		chdir(path);
+		chdir(getenv("HOME"));
+		getcwd(newPath,400);
+		strcpy(path,newPath);
 	} else if(argc == 1) {
-		chdir(argv[argc-1]);
+		if(strcmp(*argv,".")==1 || strcmp(*argv,"./")==0){
+			chdir(path); //change to current dir
+		}else if(strcmp(*argv,"~")==0){
+			chdir(getenv("HOME")); //home dir
+			strcpy(path,getenv("HOME"));
+		}else{
+			chdir(*argv); //absolute dir
+		}
+		getcwd(newPath,400);
+		strcpy(path,newPath);
+
 	} else {
 		perror("Error");
 	}
