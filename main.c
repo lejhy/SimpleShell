@@ -8,9 +8,6 @@
 #define historySize 20
 
 char path[128];
-// make these variables global for now
-int count;
-char **files;
 
 void cd(int argc, char **argv);
 void getPath(int argc, char **argv);
@@ -24,6 +21,8 @@ void exitProgram(int argc, char **argv);
 // aux function
 void printdir(int argc, char **argv);
 
+
+
 //List of built in commands in the shell
 //If the command is not here, it is either an external program or an error
 char *commands[] = {
@@ -32,7 +31,7 @@ char *commands[] = {
 	"setpath",
 	"history",
 	// "!!",
-	// "!<no>",int chdir(const char *path); 
+	// "!<no>",int chdir(const char *path);
 	// "!-<no>",
 	"alias",
 	"unalias",
@@ -65,70 +64,62 @@ int getCommandIndex(char* command);
 //If there are no arguments, only one element wide array with the last NULL pointer is returned
 char **tokenize(char* string);
 
-char printContents(const char *path, char ***ls);
+char printContents(const char *path);
 char *historyArray[historySize];
 int historyCounter = 0;
 int historyArrayCounter = 0;
 
-int main(int argc, char **argv)
-{
-    char buffer[BUFF_SIZE];
-    char **tokens;
-    int functionIndex;
-    int argumentsIndex;
-    int commandIndex;
-    pid_t processID;
+int main(int argc, char **argv){
+  char buffer[BUFF_SIZE];
+  char **tokens;
+  int functionIndex;
+  int argumentsIndex;
+  int commandIndex;
+  pid_t processID;
 
 	//Main loop
-    while(1){
-      getcwd(path, 128);
-      printf("%s>", path);
-      //check for ctrl-D
-	if (fgets(buffer, 512, stdin) == NULL) {
-		exit(0);
-	}
+  while(1){
+    getcwd(path, 128);
+    printf("%s>", path);
+    //check for ctrl-D
+  	if (fgets(buffer, 512, stdin) == NULL) {
+  		exit(0);
+  	}
 
-      //check fo history
-      //This part needs fixing
-      if (buffer[0] != NULL) {
-        historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
-        strcpy(historyArray[historyCounter], buffer);
-        historyCounter++;
-        historyArrayCounter = historyCounter%historySize;
-      }
-
-      tokens = tokenize(buffer);
-  		argumentsIndex = 0;
-  		while (tokens[argumentsIndex] != NULL) {
-  			argumentsIndex++;
-  		}
-          if (argumentsIndex > 0){
-              commandIndex = getCommandIndex(tokens[0]);
-              if (commandIndex >= 0){
-                (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
-              } else {
-                processID = getpid();
-                fork();
-                if(processID == getpid()){
-                  //parent
-                  wait(0);
-                } else {
-                  //child
-                  if (execvp(tokens[0], tokens) == -1){
-                    int j =0;
-                    while (tokens[j] != NULL){
-			printf("error: '");
-                      printf("%s", tokens[j]);
-			printf("'\n");
-                      j++;
-                    }
-                    exit(0);
-                  }
-                }
-              }
-          }
+    //check fo history
+    //This part needs fixing
+    if (buffer[0] != NULL) {
+      historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
+      strcpy(historyArray[historyCounter], buffer);
+      historyCounter++;
+      historyArrayCounter = historyCounter%historySize;
     }
-    return 0;
+
+    tokens = tokenize(buffer);
+		argumentsIndex = 0;
+		while (tokens[argumentsIndex] != NULL) {
+			argumentsIndex++;
+		}
+    if (argumentsIndex > 0){
+        commandIndex = getCommandIndex(tokens[0]);
+        if (commandIndex >= 0){
+          (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
+        } else {
+          processID = getpid();
+          fork();
+          if(processID == getpid()){
+            //parent
+            wait(0);
+          } else {
+            //child
+            execvp(tokens[0], tokens);
+            perror("error");
+            exit(0);
+          }
+        }
+      }
+    }
+  return 0;
 }
 
 //Checks whether the given string is a built in command
@@ -201,53 +192,54 @@ void exitProgram(int argc, char **argv) {
     printf("Invalid arguments");
   }
 }
- 
 
-//helper function to return the contents of current working directory
-char printContents(const char *path, char ***ls) {
+void cd(int argc, char **argv){
+  int directoryFound = 0;
+  int i;
+	if (argc > 0){
     size_t count = 0;
     size_t length = 0;
-    DIR *dp = NULL;
-    struct dirent *ep = NULL;
+    struct dirent *entryPointer = NULL;
+    char **files = NULL;
 
-    dp = opendir(path);
-    if(NULL == dp) {
-        fprintf(stderr, "no such directory: '%s'", path);
+    DIR *directoryPointer = NULL;
+    directoryPointer = opendir(path);
+
+    if(directoryPointer == NULL) {
+        printf("no such directory: '%s'", path);
         return 0;
     }
 
-    *ls = NULL;
-    ep = readdir(dp);
-    while(NULL != ep){
+    entryPointer = readdir(directoryPointer);
+    while(entryPointer != NULL){
         count++;
-        ep = readdir(dp);
+        entryPointer = readdir(directoryPointer);
     }
 
-    rewinddir(dp);
-    *ls = calloc(count, sizeof(char *));
-
+    files = calloc(count, sizeof(char *));
     count = 0;
-    ep = readdir(dp);
-    while(NULL != ep){
-        (*ls)[count++] = strdup(ep->d_name);
-        ep = readdir(dp);
+    rewinddir(directoryPointer);
+
+    entryPointer = readdir(directoryPointer);
+    while(entryPointer != NULL){
+        (files)[count++] = strdup(entryPointer->d_name);
+        entryPointer = readdir(directoryPointer);
     }
 
-    closedir(dp);
-    return count;
-}
+    rewinddir(directoryPointer);
+    closedir(directoryPointer);
 
-void cd(int argc, char **argv){
-	if (argc == 0){
-		printf("No argument enetered. You need to enter the name of the working directory\n");
-		return;
-	}
-
-	for(int i = 0; i < count; i++) {
-		if(strcmp(argv[0], files[i]) == 0) {
-			chdir(files[i]);
-		}
-
+    for(int i = 0; i < count; i++) {
+  		if(strcmp(argv[0], files[i]) == 0) {
+  			chdir(files[i]);
+        directoryFound = 1;
+  		}
+  	}
+    if(!directoryFound){
+      perror("No such directory");
+    }
+	} else {
+		printf("Not enough arguments required for this command to run\n");
 	}
 }
 
@@ -275,9 +267,40 @@ void unalias(int argc, char **argv){
 }
 
 void printdir(int argc, char **argv){
-	int i;
+  int i;
 	if (argc == 0){
-		count = printContents(path, &files);
+    size_t count = 0;
+    size_t length = 0;
+    struct dirent *entryPointer = NULL;
+    char **files = NULL;
+
+    DIR *directoryPointer = NULL;
+    directoryPointer = opendir(path);
+
+    if(directoryPointer == NULL) {
+        printf("no such directory: '%s'", path);
+        return 0;
+    }
+
+    entryPointer = readdir(directoryPointer);
+    while(entryPointer != NULL){
+        count++;
+        entryPointer = readdir(directoryPointer);
+    }
+
+    files = calloc(count, sizeof(char *));
+    count = 0;
+    rewinddir(directoryPointer);
+
+    entryPointer = readdir(directoryPointer);
+    while(entryPointer != NULL){
+        (files)[count++] = strdup(entryPointer->d_name);
+        entryPointer = readdir(directoryPointer);
+    }
+
+    rewinddir(directoryPointer);
+    closedir(directoryPointer);
+
 		for (i = 0; i < count; i++) {
 			printf("%s\n", files[i]);
 		}
