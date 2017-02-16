@@ -32,7 +32,7 @@ char *commands[] = {
 	"setpath",
 	"history",
 	// "!!",
-	// "!<no>",int chdir(const char *path); 
+	// "!<no>",int chdir(const char *path);
 	// "!-<no>",
 	"alias",
 	"unalias",
@@ -42,6 +42,14 @@ char *commands[] = {
 	"printdir",
 	NULL
 };
+typedef struct {
+	String alias;
+	String command;
+} aliasElement;
+
+aliasElement *alias[] = {
+
+}
 
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
@@ -201,7 +209,7 @@ void exitProgram(int argc, char **argv) {
     printf("Invalid arguments");
   }
 }
- 
+
 
 //helper function to return the contents of current working directory
 char printContents(const char *path, char ***ls) {
@@ -257,6 +265,7 @@ void getPath(int argc, char **argv){
 void setPath(int argc, char **argv){
 
 }
+
 void history(int argc, char **argv){
   if (argc == 0){
 	  for(int i = 0; i < historyArrayCounter; i++){
@@ -267,7 +276,17 @@ void history(int argc, char **argv){
     printf("Invalid arguments");
   }
 }
+
+
 void alias(int argc, char **argv){
+for(int i = 0; alias[i].alias != null; i++)
+	{
+	// do nothing
+	}
+else if(int i = 0; alias[i].alias = alias[i].command; i++)
+	{
+		print("element %d is correct", i);
+	}
 
 }
 void unalias(int argc, char **argv){
