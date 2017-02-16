@@ -90,7 +90,7 @@ int main(int argc, char **argv){
     //This part needs fixing
     if (buffer[0] != NULL) {
       historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
-      strcpy(historyArray[historyCounter], buffer);
+      strcpy(historyArray[historyArrayCounter], buffer);
       historyCounter++;
       historyArrayCounter = historyCounter%historySize;
     }
@@ -194,13 +194,14 @@ void exitProgram(int argc, char **argv) {
 }
 
 void cd(int argc, char **argv){
-		if (argc == 0){
-			chdir(path);
-		} else if(argc == 1) {
-			chdir(argv[argc-1]);
-		} else {
-			perror("Error");
-		}
+	if (argc == 0){
+		chdir(path);
+	} else if(argc == 1) {
+		chdir(argv[argc-1]);
+	} else {
+		perror("Error");
+	}
+}
 
 void getPath(int argc, char **argv){
 	printf("%s\n", path);
@@ -210,8 +211,17 @@ void setPath(int argc, char **argv){
 }
 void history(int argc, char **argv){
   if (argc == 0){
+    int commandNumber = 0;
+    if (historyCounter >= historySize){
+      commandNumber = historyCounter - historySize;
+      for(int i = historyArrayCounter; i < historySize; i++){
+        printf("%d: %s", commandNumber, historyArray[i]);
+        commandNumber++;
+      }
+    }
 	  for(int i = 0; i < historyArrayCounter; i++){
-      printf("%s",historyArray[i]);
+      printf("%d: %s", commandNumber, historyArray[i]);
+      commandNumber++;
     }
     printf("%d%d%d\n",historySize, historyCounter, historyArrayCounter );
   } else {
