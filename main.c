@@ -314,13 +314,20 @@ void cd(int argc, char **argv){
 	} else {
 		printf("No such path!\n");
 	}
-
 }
 
+// print the path
 void getPath(int argc, char **argv){
-	printf("%s\n", path);
+	printf("%s\n", getenv("HOME"));
 }
+
+// set the path
 void setPath(int argc, char **argv){
+	if (argc == 1) {
+		setenv("HOME", *argv, 1);
+	} else {
+		perror("Invalid number of arguments");
+	}
 
 }
 
