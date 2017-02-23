@@ -9,7 +9,8 @@
 #define BUFF_SIZE 512
 #define historySize 20
 
-char path[128];
+char path[256];
+char directory[128];
 // make these variables global for now
 int count;
 char **files;
@@ -78,7 +79,7 @@ int getCommandIndex(char* command);
 //If there are no arguments, only one element wide array with the last NULL pointer is returned
 char **tokenize(char* string);
 
-char printContents(const char *path, char ***ls);
+char printContents(const char *directory, char ***ls);
 char *historyArray[historySize];
 int historyCounter = 0;
 int historyArrayCounter = 0;
@@ -93,16 +94,17 @@ int main(int argc, char **argv)
     pid_t processID;
 
 		//get the paths of the current working directory and home directory
-		strcpy(path, getenv("HOME"));
-		chdir(path);
+		strcpy(path, getenv("PATH"));
+		strcpy(directory, getenv("HOME"));
+		chdir(directory);
 		//Main loop
 	  while(1){
-	    printf("%s>", path);
+	    printf("%s>", directory);
 
 	    //check for ctrl-D (EOF)
 	  	if (fgets(buffer, 512, stdin) == NULL) {
 				printf("\n");
-	  		exit(0);
+	  		exitProgram(0,0);
 	  	}
 
 	    /*
@@ -133,11 +135,7 @@ int main(int argc, char **argv)
 	                } else {
 	                  //child
 	                  if (execvp(tokens[0], tokens) < 0){
-	                    int j =0;
-	                    while (tokens[j] != NULL){
-												printf("error: '%s'\n",tokens[j]);
-	                      j++;
-	                    }
+											perror("Error execvp");
 	                    exit(0);
 	                  }
 	                }
@@ -212,6 +210,9 @@ void print(int argc, char **argv) {
 
 void exitProgram(int argc, char **argv) {
   if (argc == 0){
+		if (setenv("PATH", path, 1) != -1){
+			printf("Seting path to: %s\n", path);
+		};
 	  exit(0);
   } else {
     printf("Invalid arguments");
@@ -220,15 +221,15 @@ void exitProgram(int argc, char **argv) {
 
 
 //helper function to return the contents of current working directory
-char printContents(const char *path, char ***ls) {
+char printContents(const char *directory, char ***ls) {
     size_t count = 0;
     size_t length = 0;
     DIR *dp = NULL;
     struct dirent *ep = NULL;
 
-    dp = opendir(path);
+    dp = opendir(directory);
     if(NULL == dp) {
-        fprintf(stderr, "no such directory: '%s'", path);
+        fprintf(stderr, "no such directory: '%s'", directory);
         return 0;
     }
 
@@ -257,36 +258,39 @@ TO-DO:
 cd -
 */
 void cd(int argc, char **argv){
-	char newPath[400];
+	char newDirectory[400];
 	if (argc == 0){
 		chdir(getenv("HOME"));
-		getcwd(newPath,400);
-		strcpy(path,newPath);
+		getcwd(newDirectory,400);
+		strcpy(directory,newDirectory);
 	} else if(argc == 1) {
 		if(strcmp(*argv,".")==0 || strcmp(*argv,"./")==0){
-			chdir(path); //change to current dir
+			chdir(directory); //change to current dir
 		}else if(strcmp(*argv,"~")==0){
 			chdir(getenv("HOME")); //home dir
-			strcpy(path,getenv("HOME"));
-		}else if(chdir(*argv)==0){
+			strcpy(directory,getenv("HOME"));
+		}else if(chdir(*argv)==-1){
 			perror("Error");
 		}
-
-		getcwd(newPath,400);
-		strcpy(path,newPath);
+		getcwd(newDirectory,400);
+		strcpy(directory,newDirectory);
+	} else {
+		perror("Error");
 	}
 
 }
 
 // print the path
 void getPath(int argc, char **argv){
-	printf("%s\n", getenv("HOME"));
+	printf("%s\n", getenv("PATH"));
 }
 
 // set the path
 void setPath(int argc, char **argv){
 	if (argc == 1) {
-		setenv("HOME", *argv, 1);
+		if (setenv("PATH", *argv, 1) == -1){
+			perror("Error");
+		}
 	} else {
 		perror("Invalid number of arguments");
 	}
@@ -333,7 +337,7 @@ void unalias(int argc, char **argv){
 void printdir(int argc, char **argv){
 	int i;
 	if (argc == 0){
-		count = printContents(path, &files);
+		count = printContents(directory, &files);
 		for (i = 0; i < count; i++) {
 			printf("%s\n", files[i]);
 		}
