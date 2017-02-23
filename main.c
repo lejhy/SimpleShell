@@ -263,14 +263,13 @@ void cd(int argc, char **argv){
 		getcwd(newPath,400);
 		strcpy(path,newPath);
 	} else if(argc == 1) {
-		if(strcmp(*argv,".")==1 || strcmp(*argv,"./")==0){
+		if(strcmp(*argv,".")==0 || strcmp(*argv,"./")==0){
 			chdir(path); //change to current dir
 		}else if(strcmp(*argv,"~")==0){
 			chdir(getenv("HOME")); //home dir
 			strcpy(path,getenv("HOME"));
 		}else if(chdir(*argv)==0){
-			
-			chdir(*argv); //absolute dir
+
 		}else{
 			perror("Error");
 		}
