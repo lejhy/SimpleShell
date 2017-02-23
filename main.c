@@ -268,15 +268,17 @@ void cd(int argc, char **argv){
 		}else if(strcmp(*argv,"~")==0){
 			chdir(getenv("HOME")); //home dir
 			strcpy(path,getenv("HOME"));
-		}else{
+		}else if(chdir(*argv)==0){
+			
 			chdir(*argv); //absolute dir
+		}else{
+			perror("Error");
 		}
-		getcwd(newPath,400);
-		strcpy(path,newPath);
 
-	} else {
-		perror("Error");
+		getcwd(newPath,400);
+		strcpy(path,newPath);	
 	}
+	
 }
 
 void getPath(int argc, char **argv){
