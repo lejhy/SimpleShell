@@ -1,3 +1,38 @@
+/*
+_______ __________________     _______           _        _
+(  ____ \\__   __/\__   __/    (  ____ )|\     /|( \      ( \
+| (    \/   ) (      ) (       | (    )|| )   ( || (      | (
+| |         | |      | |       | (____)|| |   | || |      | |
+| | ____    | |      | |       |  _____)| |   | || |      | |
+| | \_  )   | |      | |       | (      | |   | || |      | |
+| (___) |___) (___   | |       | )      | (___) || (____/\| (____/\
+(_______)\_______/   )_(       |/       (_______)(_______/(_______/
+									_______  _                     _______
+|\     /||\     /|(  ____ \( (    /|    |\     /|(  ___  )|\     /|
+| )   ( || )   ( || (    \/|  \  ( |    ( \   / )| (   ) || )   ( |
+| | _ | || (___) || (__    |   \ | |     \ (_) / | |   | || |   | |
+| |( )| ||  ___  ||  __)   | (\ \) |      \   /  | |   | || |   | |
+| || || || (   ) || (      | | \   |       ) (   | |   | || |   | |
+| () () || )   ( || (____/\| )  \  |       | |   | (___) || (___) |
+(_______)|/     \|(_______/|/    )_)       \_/   (_______)(_______)
+					_______ _________ _______  _______ _________
+				 (  ____ \\__   __/(  ___  )(  ____ )\__   __/
+				 | (    \/   ) (   | (   ) || (    )|   ) (
+				 | (_____    | |   | (___) || (____)|   | |
+				 (_____  )   | |   |  ___  ||     __)   | |
+							 ) |   | |   | (   ) || (\ (      | |
+				 /\____) |   | |   | )   ( || ) \ \__   | |
+				 \_______)   )_(   |/     \||/   \__/   )_(
+					 _______  _______  _       _________ _        _______
+ |\     /|(  ___  )(  ____ )| \    /\\__   __/( (    /|(  ____ \
+ | )   ( || (   ) || (    )||  \  / /   ) (   |  \  ( || (    \/
+ | | _ | || |   | || (____)||  (_/ /    | |   |   \ | || |
+ | |( )| || |   | ||     __)|   _ (     | |   | (\ \) || | ____
+ | || || || |   | || (\ (   |  ( \ \    | |   | | \   || | \_  )
+ | () () || (___) || ) \ \__|  /  \ \___) (___| )  \  || (___) |
+ (_______)(_______)|/   \__/|_/    \/\_______/|/    )_)(_______)
+
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,9 +45,11 @@
 #define historySize 20
 
 char path[128];
+char previousPath[128];
 // make these variables global for now
 int count;
 char **files;
+
 
 void cd(int argc, char **argv);
 void getPath(int argc, char **argv);
@@ -252,33 +289,32 @@ char printContents(const char *path, char ***ls) {
     closedir(dp);
     return count;
 }
-/*
-TO-DO:
-cd -
-*/
-void cd(int argc, char **argv){
-	char newPath[400];
-	if (argc == 0){
-		chdir(getenv("HOME"));
-		getcwd(newPath,400);
-		strcpy(path,newPath);
-	} else if(argc == 1) {
-		if(strcmp(*argv,".")==1 || strcmp(*argv,"./")==0){
-			chdir(path); //change to current dir
-		}else if(strcmp(*argv,"~")==0){
-			chdir(getenv("HOME")); //home dir
-			strcpy(path,getenv("HOME"));
-		}else if(chdir(*argv)==0){
-			
-			chdir(*argv); //absolute dir
-		}else{
-			perror("Error");
-		}
 
-		getcwd(newPath,400);
-		strcpy(path,newPath);	
+
+//DONE
+void cd(int argc, char **argv){
+	int isSuccess;
+	if (argc == 0){
+		isSuccess = chdir(getenv("HOME")); 	//"cd" - go to home dir
+	} else if(argc == 1) {
+		if(strcmp(*argv,"~") == 0) {
+			isSuccess = chdir(getenv("HOME")); //home dir
+		} else if(strcmp(*argv, "-") == 0) {
+			isSuccess = chdir(previousPath); //previous dir
+		} else {
+			isSuccess =chdir(*argv);// relative/absulute/path
+		}
+	} else {
+		printf("Too many arguments!\n");
+		return;
 	}
-	
+	if (isSuccess == 0){
+		strcpy(previousPath, path);
+		getcwd(path, 128);
+	} else {
+		printf("No such path!\n");
+	}
+
 }
 
 void getPath(int argc, char **argv){
