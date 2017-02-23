@@ -15,6 +15,7 @@ char directory[128];
 int count;
 char **files;
 
+
 void cd(int argc, char **argv);
 void getPath(int argc, char **argv);
 void setPath(int argc, char **argv);
@@ -253,10 +254,9 @@ char printContents(const char *directory, char ***ls) {
     closedir(dp);
     return count;
 }
-/*
-TO-DO:
-cd -
-*/
+
+
+//DONE
 void cd(int argc, char **argv){
 	char newDirectory[400];
 	if (argc == 0){
@@ -277,7 +277,6 @@ void cd(int argc, char **argv){
 	} else {
 		perror("Error");
 	}
-
 }
 
 // print the path
