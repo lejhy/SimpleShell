@@ -11,6 +11,7 @@
 
 char path[256];
 char directory[128];
+char previousDirectory[128];
 // make these variables global for now
 int count;
 char **files;
@@ -256,27 +257,37 @@ char printContents(const char *directory, char ***ls) {
 }
 
 
-//DONE
+//PLS DON'T OVERWITE THIS, WOJTEK
+//REALLY
 void cd(int argc, char **argv){
 	char newDirectory[400];
+	int isSuccess;
+
+	//executes chdir(args) command depending on the type
+	//of arguments used, stores result in isSuccess
 	if (argc == 0){
-		chdir(getenv("HOME"));
-		getcwd(newDirectory,400);
-		strcpy(directory,newDirectory);
+		isSuccess = chdir(getenv("HOME"));
 	} else if(argc == 1) {
-		if(strcmp(*argv,".")==0 || strcmp(*argv,"./")==0){
-			chdir(directory); //change to current dir
-		}else if(strcmp(*argv,"~")==0){
-			chdir(getenv("HOME")); //home dir
-			strcpy(directory,getenv("HOME"));
-		}else if(chdir(*argv)==-1){
-			perror("Error");
+		if(strcmp(*argv,"~") == 0 ) {
+			isSuccess = chdir(getenv("HOME"));
+		} else if(strcmp(*argv, "-") == 0) {
+			isSuccess = chdir(previousDirectory);
+		} else {
+			isSuccess = chdir(*argv);
 		}
-		getcwd(newDirectory,400);
-		strcpy(directory,newDirectory);
+	} else {
+		printf("Error : Too many arguments!");
+	}
+
+	//if no problems with chdir
+	if(isSuccess == 0){
+		strcpy(previousDirectory, directory); //save old dir
+		getcwd(newDirectory,400);							//get cur dir
+		strcpy(directory,newDirectory);				//save cur dir
 	} else {
 		perror("Error");
 	}
+
 }
 
 // print the path
