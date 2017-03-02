@@ -281,7 +281,11 @@ void cd(int argc, char **argv){
 
 // print the path
 void getPath(int argc, char **argv){
-	printf("%s\n", getenv("PATH"));
+	if (argc == 0) {
+		printf("%s\n", getenv("PATH"));
+	} else {
+		perror("Invalid number of arguments");
+	}
 }
 
 // set the path
