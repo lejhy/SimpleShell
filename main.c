@@ -35,9 +35,6 @@ char *commands[] = {
 	"getpath",
 	"setpath",
 	"history",
-	// "!!",
-	// "!<no>",int chdir(const char *path);
-	// "!-<no>",
 	"alias",
 	"unalias",
 	"print",
@@ -108,16 +105,43 @@ int main(int argc, char **argv)
 	  		exitProgram(0,0);
 	  	}
 
-	    /*
-	    //check fo history
-	    //This part needs fixing
-	    if (buffer[0] != NULL) {
-	      historyArray[historyCounter] = malloc(BUFF_SIZE*sizeof(char));
+			//check fo history
+			if (buffer[0] == '!') {
+				if (strcmp(buffer, "!!\n") == 0) {
+					if (historyCounter == 0) {
+						printf("empty history");
+					} else if (historyArrayCounter == 0) {
+						// pointer at the beginning, last one at the end
+						int lastCommand = historySize - 1;
+						strcpy (buffer, historyArray[lastCommand]);
+					} else {
+						int lastCommand = historyArrayCounter - 1;
+						strcpy (buffer, historyArray[lastCommand]);
+					}
+				} else {
+					// shift the buffer
+					int i = 1;
+					while (buffer[i] != '\0') {
+						buffer[i-1] = buffer[i];
+						i++;
+					}
+					buffer[i-1] = '\0';
+					// convert to number
+					int command = atoi(buffer);
+					if (command >= 0 && command < historyCounter && command >= historyCounter-historySize) {
+						command = command%historySize;
+						strcpy (buffer, historyArray[command]);
+					} else {
+						printf("bad command number\n");
+					}
+				}
+			} else if (buffer[0] != '\n' && strcmp(buffer, "history\n") != 0) {
+	      historyArray[historyArrayCounter] = malloc(BUFF_SIZE*sizeof(char));
 	      strcpy(historyArray[historyArrayCounter], buffer);
 	      historyCounter++;
 	      historyArrayCounter = historyCounter%historySize;
 	    }
-				*/
+
 	      tokens = tokenize(buffer);
 	  		argumentsIndex = 0;
 	  		while (tokens[argumentsIndex] != NULL) {
@@ -319,7 +343,6 @@ void history(int argc, char **argv){
     printf("Invalid arguments");
   }
 }
-
 
  void alias(int argc, char **argv){
 // for(int i = 0; alias[i].alias != null; i++)
