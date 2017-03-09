@@ -115,7 +115,8 @@ int main(int argc, char **argv)
 			if (buffer[0] == '!') {
 				if (strcmp(buffer, "!!\n") == 0) {
 					if (historyCounter == 0) {
-						printf("empty history");
+						printf("Error: Empty history!\n");
+						continue;
 					} else if (historyArrayCounter == 0) {
 						// pointer at the beginning, last one at the end
 						int lastCommand = historySize - 1;
@@ -134,14 +135,18 @@ int main(int argc, char **argv)
 					buffer[i-1] = '\0';
 					// convert to number
 					int command = atoi(buffer);
+					if (command < 0) {
+						command = historyCounter + command - 1;
+					}
 					if (command >= 0 && command < historyCounter && command >= historyCounter-historySize) {
 						command = command%historySize;
 						strcpy (buffer, historyArray[command]);
 					} else {
-						printf("bad command number\n");
+						printf("Error: Bad command number!\n");
+						continue;
 					}
 				}
-			} else if (buffer[0] != '\n' && strcmp(buffer, "history\n") != 0) {
+			} else if (buffer[0] != '\n') {
 	      historyArray[historyArrayCounter] = malloc(BUFF_SIZE*sizeof(char));
 	      strcpy(historyArray[historyArrayCounter], buffer);
 	      historyCounter++;
@@ -296,6 +301,14 @@ void cd(int argc, char **argv){
 	//of arguments used, stores result in isSuccess
 	if (argc == 0){
 		isSuccess = chdir(getenv("HOME"));
+		//if no problems with chdir
+		if(isSuccess == 0){
+			strcpy(previousDirectory, directory); //save old dir
+			getcwd(newDirectory,400);							//get cur dir
+			strcpy(directory,newDirectory);				//save cur dir
+		} else {
+			perror("Error");
+		}
 	} else if(argc == 1) {
 		if(strcmp(*argv,"~") == 0 ) {
 			isSuccess = chdir(getenv("HOME"));
@@ -304,19 +317,17 @@ void cd(int argc, char **argv){
 		} else {
 			isSuccess = chdir(*argv);
 		}
+		//if no problems with chdir
+		if(isSuccess == 0){
+			strcpy(previousDirectory, directory); //save old dir
+			getcwd(newDirectory,400);							//get cur dir
+			strcpy(directory,newDirectory);				//save cur dir
+		} else {
+			perror("Error");
+		}
 	} else {
-		printf("Error : Too many arguments!");
+		printf("Error : Too many arguments!\n");
 	}
-
-	//if no problems with chdir
-	if(isSuccess == 0){
-		strcpy(previousDirectory, directory); //save old dir
-		getcwd(newDirectory,400);							//get cur dir
-		strcpy(directory,newDirectory);				//save cur dir
-	} else {
-		perror("Error");
-	}
-
 }
 
 // print the path
@@ -324,7 +335,7 @@ void getPath(int argc, char **argv){
 	if (argc == 0) {
 		printf("%s\n", getenv("PATH"));
 	} else {
-		perror("Invalid number of arguments");
+		printf("Error: Invalid number of arguments!\n");
 	}
 }
 
@@ -335,7 +346,7 @@ void setPath(int argc, char **argv){
 			perror("Error");
 		}
 	} else {
-		perror("Invalid number of arguments");
+		printf("Error: Invalid number of arguments!\n");
 	}
 
 }
@@ -354,9 +365,8 @@ void history(int argc, char **argv){
       printf("%d: %s", commandNumber, historyArray[i]);
       commandNumber++;
     }
-    printf("%d%d%d\n",historySize, historyCounter, historyArrayCounter );
   } else {
-    printf("Invalid arguments");
+    printf("Error: Invalid arguments\n");
   }
 }
 
@@ -398,6 +408,6 @@ void printdir(int argc, char **argv){
 			printf("%s\n", files[i]);
 		}
 	} else {
-		printf("No arguments required for this command to run\n");
+		printf("Erroer: No arguments required for this command to run!\n");
 	}
 }
