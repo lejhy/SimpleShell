@@ -15,6 +15,14 @@ char previousDirectory[128];
 // make these variables global for now
 int count;
 char **files;
+int alias_size;
+
+
+typedef struct{
+	char* alias;
+	char* command;
+} aliasElement;
+
 
 
 void cd(int argc, char **argv);
@@ -26,6 +34,7 @@ void unalias(int argc, char **argv);
 void help(int argc, char **argv);
 void print(int argc, char **argv);
 void exitProgram(int argc, char **argv);
+// void insert(aliasElement *a, char* alias, char* command);
 // aux function
 void printdir(int argc, char **argv);
 
@@ -45,16 +54,11 @@ char *commands[] = {
 	NULL
 };
 
-/*
-typedef struct {
-	String alias;
-	String command;
-} aliasElement;
 
-aliasElement *alias[] = {
+aliasElement *alias_array[] = {
 
-}
-*/
+};
+
 
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
@@ -91,6 +95,7 @@ int main(int argc, char **argv)
     int argumentsIndex;
     int commandIndex;
     pid_t processID;
+	int alias_size;
 
 		//get the paths of the current working directory and home directory
 		strcpy(path, getenv("PATH"));
@@ -356,17 +361,31 @@ void history(int argc, char **argv){
 }
 
  void alias(int argc, char **argv){
-// for(int i = 0; alias[i].alias != null; i++)
-// 	{
-// 	// do nothing
-// 	}
-// else if(int i = 0; alias[i].alias = alias[i].command; i++)
-// 	{
-// 		print("element %d is correct", i);
-// 	}
-//
- }
 
+// int i;
+//
+//  for(i = 0; i<alias_size; i++)
+// 	 	{
+// 	 	if(alias_array[i] != null && aliasElement.command != null){
+//
+// 		}
+// 	 	}
+	}
+
+
+//
+// void insert(alias_array* a, char* s, char* c)
+// {
+// // 	a->alias = alias;
+// // 	a->command = command;
+// //
+// // // i used to remove errors, should be fixed later
+// // int i;
+// // insert(&alias_array[i], alias[i], command[i]);
+// //
+// // alias_size++;
+//
+// }
 void unalias(int argc, char **argv){
 
 }
