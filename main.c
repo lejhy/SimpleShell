@@ -76,6 +76,8 @@ int getCommandIndex(char* command);
 char **tokenize(char* string);
 
 char printContents(const char *directory, char ***ls);
+void saveHistoryToFile();
+
 char *historyArray[historySize];
 int historyCounter = 0;
 int historyArrayCounter = 0;
@@ -249,6 +251,9 @@ void print(int argc, char **argv) {
 
 void exitProgram(int argc, char **argv) {
   if (argc == 0){
+
+		saveHistoryToFile();
+
 		if (setenv("PATH", path, 1) != -1){
 			printf("Seting path to: %s\n", path);
 		};
@@ -373,7 +378,31 @@ void history(int argc, char **argv){
   }
 }
 
-  void alias(int argc, char **argv){
+
+void saveHistoryToFile() {
+	FILE *fp;
+	int i = 0;
+	// history save to .hist_list in home directory
+	fp = fopen(".hist_list", "w+");
+
+	if (fp == NULL) {
+		perror("failed to open stream");
+
+	} else {
+		printf("FILE OPENED FOR READING\n");
+
+		while(i < historyArrayCounter) {
+			fprintf(fp, "%s\n", historyArray[i]);
+			i++;
+		}
+		fclose(fp);
+
+	}
+}
+
+ void alias(int argc, char **argv){
+
+// int i;
 //
 //  if(aliases.command[1] == null)
 //  {
@@ -383,8 +412,10 @@ void history(int argc, char **argv){
 // 	 add_alias();
 // }
 //
-	}
 //
+//
+	}
+	//
 //
 //
  void insert(char* s, char* c)
