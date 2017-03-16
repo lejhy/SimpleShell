@@ -8,6 +8,7 @@
 
 #define BUFF_SIZE 512
 #define historySize 20
+#define size_of_aliases 10
 
 char path[256];
 char directory[128];
@@ -15,7 +16,15 @@ char previousDirectory[128];
 // make these variables global for now
 int count;
 char **files;
-int alias_size = 10;
+int alias_count;
+
+
+typedef struct{
+    char * alias;
+    char * command;
+} aliasElement;
+
+aliasElement aliases[size_of_aliases];
 
 
 void cd(int argc, char **argv);
@@ -29,6 +38,7 @@ void print(int argc, char **argv);
 void exitProgram(int argc, char **argv);
 void add_alias();
 void print_alias();
+
 
 // aux function
 void printdir(int argc, char **argv);
@@ -92,12 +102,7 @@ int main(int argc, char **argv)
     pid_t processID;
 		//int alias_size;
 
-		// struct aliasElement{
-		//  char* alias;
-		//  char* command;
-		// 	};
-		//
-	  // struct aliasElement aliases[alias_size];
+
 
 		// dynamic memory allocation for structs
 	//	*aliases = malloc(alias_size * sizeof(aliasElement));
@@ -234,9 +239,18 @@ char **tokenize(char *string) {
 void help(int argc, char **argv) {
   if (argc == 0){
 	  printf("HELP! I need somebody. HELP! Not just anybody.\r\n");
-  } else {
-    printf("Invalid arguments");
-  }
+      int i =0;
+      for(i=0;i<10;i++){
+          char *pos = commands[i];
+          while(*pos != '\0'){
+              printf("%c", *(pos++));
+              }
+                     printf("\n");
+                   }
+}
+      else {
+          printf("Invalid arguments");
+          }
 }
 
 void print(int argc, char **argv) {
@@ -400,37 +414,46 @@ void saveHistoryToFile() {
 	}
 }
 
+void printf_alias(){
+
+    int i = 0;
+
+
+    if(alias_count == 0){
+        printf("Error: There are no aliases available to use!\n");
+    }
+
+    while(i<alias_count){
+        printf("%s: %s\n", aliases[i].alias, aliases[i].command);
+    }
+
+}
+
+
  void alias(int argc, char **argv){
 
-// int i;
-//
-//  if(aliases.command[1] == null)
-//  {
-// 	 printf_alias();
-//  }
-// else{
-// 	 add_alias();
-// }
-//
-//
-//
-	}
-	//
-//
-//
- void insert(char* s, char* c)
- {
-//  	a->alias = alias;
-//  	a->command = command;
-//
-// // i used to remove errors, should be fixed later
-//  int i;
-// insert(&alias_array[i], alias[i], command[i]);
-//
-// alias_size++;
-//
-  }
-//
+
+    if (argc == 0){
+        printf_alias();
+    }
+    else{
+    // add_alias();
+     }
+
+ }
+
+
+ void add_alias(){
+   //
+
+
+
+
+
+
+
+ }
+
  void update_alias(int index)
  {
 //   aliases[index].command[1];
