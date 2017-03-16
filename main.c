@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 
 #define BUFF_SIZE 512
 #define historySize 20
@@ -238,13 +239,17 @@ char **tokenize(char *string) {
 //All the buid in commands should be declared here
 void help(int argc, char **argv) {
   if (argc == 0){
-	  printf("HELP! I need somebody. HELP! Not just anybody.\r\n");
+	  printf("Here is a list of commands available.\r\n");
       int i =0;
       for(i=0;i<10;i++){
           char *pos = commands[i];
           while(*pos != '\0'){
-              printf("%c", *(pos++));
+            printf("- ");
+
+          while(*pos != '\0'){
+            printf("%c", *(pos++));
               }
+            }
                      printf("\n");
                    }
 }
@@ -432,6 +437,7 @@ void printf_alias(){
 
  void alias(int argc, char **argv){
 
+// may need to add another argument to the alias function but unsure just now
 
     if (argc == 0){
         printf_alias();
@@ -444,26 +450,30 @@ void printf_alias(){
 
 
  void add_alias(){
-   //
 
-
-
+// if (argv == null || strcmp(x,y) == 0)
 
 
 
 
  }
 
- void update_alias(int index)
+ void update_alias(int index, char **argv)
  {
-//   aliases[index].command[1];
-// 	int = 2;
-//
-//
-// 		strcat(aliases[index].command, command[i])
-// 		strcat(alias[index].command, "");
-// 		i++;
+   aliases[index].alias = *argv;
+   int i=2;
+
+   strcpy(aliases[index].command, "");
+
+   while(commands[i] != 0){
+     strcat(aliases[index].command, argv[i]);
+     strcat(aliases[index].command, "");
+     i++;
+   }
+
 }
+
+
 void unalias(int argc, char **argv){
 
 }
