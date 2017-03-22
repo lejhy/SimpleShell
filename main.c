@@ -92,8 +92,8 @@ char printContents(const char *directory, char ***ls);
 void saveHistoryToFile();
 
 char *historyArray[historySize];
-int historyCounter = 0;
-int historyArrayCounter = 0;
+int historyCounter = 1;
+int historyArrayCounter = 1;
 
 int main(int argc, char **argv)
 {
