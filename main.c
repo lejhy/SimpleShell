@@ -39,6 +39,8 @@ void print(int argc, char **argv);
 void exitProgram(int argc, char **argv);
 void add_alias();
 void print_alias();
+void update_alias(int index, char **argv);
+
 
 
 // aux function
@@ -102,8 +104,6 @@ int main(int argc, char **argv)
     int commandIndex;
     pid_t processID;
 		//int alias_size;
-
-
 
 		// dynamic memory allocation for structs
 	//	*aliases = malloc(alias_size * sizeof(aliasElement));
@@ -380,7 +380,7 @@ void setPath(int argc, char **argv){
 
 void history(int argc, char **argv){
   if (argc == 0){
-    int commandNumber = 0;
+    int commandNumber = 1;
     if (historyCounter >= historySize){
       commandNumber = historyCounter - historySize;
       for(int i = historyArrayCounter; i < historySize; i++){
@@ -419,6 +419,17 @@ void saveHistoryToFile() {
 	}
 }
 
+int alias_exists(char * target_alias){
+
+  for(int i = 0; i< alias_count; i++){
+
+    if(strcmp(aliases[i].alias, target_alias) == 0)
+    return i;
+  }
+
+  return -1;
+}
+
 void printf_alias(){
 
     int i = 0;
@@ -443,29 +454,58 @@ void printf_alias(){
         printf_alias();
     }
     else{
-    // add_alias();
+    add_alias();
      }
 
  }
 
 
- void add_alias(){
+ void add_alias(int argc, char **argv){
 
-// if (argv == null || strcmp(x,y) == 0)
+if (argv[2] == 0 || strcmp(argv[1], argv[2]) == 0)
+{
+  printf("Error: Invalid alias. They are either the same or there is no second argument.\n");
+  return;
+}
 
+  int pointer = alias_exists(argv[2]);
 
+  if(pointer>=0){
+    printf("Error: You cannot add an alias to an existing alias \n");
+  }
 
+else  {
+      pointer = alias_exists(argv[1]);
+
+      if(pointer >= 0){
+        printf("Error: alias already exists with this name.\n" );
+        update_alias(pointer,argv);
+      }
+
+    else{
+
+       if(alias_count>=10){
+         printf("Error: Alias list is already full\n");
+
+         return;
+       }
+
+      update_alias(alias_count, argv);
+      alias_count++;
+
+      }
+  }
 
  }
 
  void update_alias(int index, char **argv)
  {
-   aliases[index].alias = *argv;
+   aliases[index].alias = argv[1];
    int i=2;
 
    strcpy(aliases[index].command, "");
 
-   while(commands[i] != 0){
+   while(argv[i] != 0){
      strcat(aliases[index].command, argv[i]);
      strcat(aliases[index].command, "");
      i++;
