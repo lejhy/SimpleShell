@@ -17,7 +17,7 @@ char previousDirectory[128];
 // make these variables global for now
 int count;
 char **files;
-int alias_count;
+int alias_count = 0;
 
 
 typedef struct{
@@ -40,6 +40,7 @@ void exitProgram(int argc, char **argv);
 void add_alias();
 void print_alias();
 void update_alias(int index, char **argv);
+int alias_exists(char *target_alias);
 
 
 
@@ -127,6 +128,8 @@ int main(int argc, char **argv)
 	  		exitProgram(0,0);
 	  	}
 
+
+
 			//check fo history
 			if (buffer[0] == '!') {
 				if (strcmp(buffer, "!!\n") == 0) {
@@ -170,6 +173,14 @@ int main(int argc, char **argv)
 	    }
 
 	      tokens = tokenize(buffer);
+
+        // check for aliases
+        int aliasIndex = alias_exists(tokens[0]);
+        if (aliasIndex >= 0){
+          strcpy(buffer, aliases[aliasIndex].command);
+            tokens = tokenize(buffer);
+        }
+
 	  		argumentsIndex = 0;
 	  		while (tokens[argumentsIndex] != NULL) {
 	  			argumentsIndex++;
@@ -187,7 +198,7 @@ int main(int argc, char **argv)
 	                } else {
 	                  //child
 	                  if (execvp(tokens[0], tokens) < 0){
-											perror("Error execvp");
+											perror(tokens[0]);
 	                    exit(0);
 	                  }
 	                }
@@ -325,6 +336,8 @@ char printContents(const char *directory, char ***ls) {
 
 //PLS DON'T OVERWITE THIS, WOJTEK
 //REALLY
+// or what?, Fraser
+
 void cd(int argc, char **argv){
 	char newDirectory[400];
 	int isSuccess;
@@ -468,10 +481,9 @@ void saveHistoryToFile() {
 	}
 }
 
-int alias_exists(char * target_alias){
+int alias_exists(char *target_alias){
 
   for(int i = 0; i< alias_count; i++){
-
     if(strcmp(aliases[i].alias, target_alias) == 0)
     return i;
   }
@@ -489,21 +501,20 @@ void printf_alias(){
     }
 
     while(i<alias_count){
-        printf("%s: %s\n", aliases[i].alias, aliases[i].command);
+        printf("%scl: %s\n", aliases[i].alias, aliases[i].command);
+        i++;
     }
-
 }
 
-
  void alias(int argc, char **argv){
-
+   
 // may need to add another argument to the alias function but unsure just now
 
     if (argc == 0){
         printf_alias();
     }
     else{
-    add_alias();
+    add_alias(argc, argv);
      }
 
  }
@@ -511,31 +522,27 @@ void printf_alias(){
 
  void add_alias(int argc, char **argv){
 
-if (argv[2] == 0 || strcmp(argv[1], argv[2]) == 0)
-{
-  printf("Error: Invalid alias. They are either the same or there is no second argument.\n");
+   //creating a pointer to the location of the alias in the structure
+     int pointer = alias_exists(argv[0]);
+
+
+if (argv[1] == 0){
+  printf("Error: Invalid alias. Second argument missing.\n");
+  return;
+}
+else if(strcmp(argv[0], argv[1]) == 0){
+  printf("Error: both commands are the same.\n");
   return;
 }
 
-  int pointer = alias_exists(argv[2]);
-
-  if(pointer>=0){
+else if(pointer>=0){
     printf("Error: You cannot add an alias to an existing alias \n");
   }
-
-else  {
-      pointer = alias_exists(argv[1]);
-
-      if(pointer >= 0){
-        printf("Error: alias already exists with this name.\n" );
-        update_alias(pointer,argv);
-      }
 
     else{
 
        if(alias_count>=10){
          printf("Error: Alias list is already full\n");
-
          return;
        }
 
@@ -545,13 +552,13 @@ else  {
       }
   }
 
- }
+
 
  void update_alias(int index, char **argv)
  {
-   aliases[index].alias = argv[1];
-   int i=2;
-
+   aliases[index].alias = strdup(argv[0]);
+   int i=1;
+   aliases[index].command = malloc(sizeof(char)*BUFF_SIZE);
    strcpy(aliases[index].command, "");
 
    while(argv[i] != 0){
