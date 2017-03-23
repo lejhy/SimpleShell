@@ -90,6 +90,8 @@ char **tokenize(char* string);
 
 char printContents(const char *directory, char ***ls);
 void saveHistoryToFile();
+void loadHistoryFromFile();
+void updateHistory();
 
 char *historyArray[historySize];
 int historyCounter = 1;
@@ -112,6 +114,9 @@ int main(int argc, char **argv)
 		strcpy(path, getenv("PATH"));
 		strcpy(directory, getenv("HOME"));
 		chdir(directory);
+
+    loadHistoryFromFile();
+
 		//Main loop
 	  while(1){
 	    printf("%s>", directory);
@@ -397,10 +402,44 @@ void history(int argc, char **argv){
   }
 }
 
+void loadHistoryFromFile() {
+	FILE *fp;
+	char c[BUFF_SIZE+1];
+
+	if( (fp = fopen(".hist_list", "r")) == NULL){
+		perror("failed to open stream");
+
+	} else {
+
+		while(1) {
+			if( (fgets(c, BUFF_SIZE, fp)) == NULL) //end of file Checks
+			   break;
+
+      char **tokens = malloc(8 * sizeof(char*));
+
+      if(*c != '\n') {
+        tokens = tokenize(c);
+        historyCounter = atoi(tokens[0]);
+      }
+
+
+      // complete this
+
+      // remove new lines
+      historyArray[historyArrayCounter] = malloc(BUFF_SIZE*sizeof(char));
+      strcpy(historyArray[historyArrayCounter], c);
+      historyCounter++;
+      historyArrayCounter = historyCounter%historySize;
+
+	 	}
+	 	fclose(fp);
+	}
+}
+
 
 void saveHistoryToFile() {
 	FILE *fp;
-	int i = 0;
+	int commandNumber = 1;
 	// history save to .hist_list in home directory
 	fp = fopen(".hist_list", "w+");
 
@@ -410,10 +449,20 @@ void saveHistoryToFile() {
 	} else {
 		printf("FILE OPENED FOR READING\n");
 
-		while(i < historyArrayCounter) {
-			fprintf(fp, "%s\n", historyArray[i]);
-			i++;
-		}
+      if (historyCounter >= historySize){
+        commandNumber = historyCounter - historySize;
+        for(int i = historyArrayCounter; i < historySize; i++){
+          fprintf(fp, "%d ", commandNumber);
+          fprintf(fp, "%s\n", historyArray[i]);
+          commandNumber++;
+        }
+      }
+
+      for(int i = 0; i < historyArrayCounter; i++){
+        fprintf(fp, "%d ", commandNumber);
+        fprintf(fp, "%s\n", historyArray[i]);
+        commandNumber++;
+      }
 		fclose(fp);
 
 	}
