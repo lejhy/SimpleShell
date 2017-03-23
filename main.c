@@ -95,8 +95,8 @@ void loadHistoryFromFile();
 void updateHistory();
 
 char *historyArray[historySize];
-int historyCounter = 1;
-int historyArrayCounter = 1;
+int historyCounter = 0;
+int historyArrayCounter = 0;
 
 int main(int argc, char **argv)
 {
@@ -398,7 +398,7 @@ void setPath(int argc, char **argv){
 
 void history(int argc, char **argv){
   if (argc == 0){
-    int commandNumber = 1;
+    int commandNumber = 0;
     if (historyCounter >= historySize){
       commandNumber = historyCounter - historySize;
       for(int i = historyArrayCounter; i < historySize; i++){
@@ -423,27 +423,16 @@ void loadHistoryFromFile() {
 		perror("failed to open stream");
 
 	} else {
+    if (fgets(c, BUFF_SIZE, fp) != NULL)
+      historyCounter = atoi(c);
+    if (fgets(c, BUFF_SIZE, fp) != NULL)
+      historyArrayCounter = atoi(c);
 
-		while(1) {
-			if( (fgets(c, BUFF_SIZE, fp)) == NULL) //end of file Checks
-			   break;
-
-      char **tokens = malloc(8 * sizeof(char*));
-
-      if(*c != '\n') {
-        tokens = tokenize(c);
-        historyCounter = atoi(tokens[0]);
-      }
-
-
-      // complete this
-
-      // remove new lines
-      historyArray[historyArrayCounter] = malloc(BUFF_SIZE*sizeof(char));
-      strcpy(historyArray[historyArrayCounter], c);
-      historyCounter++;
-      historyArrayCounter = historyCounter%historySize;
-
+    int i = 0;
+		while(fgets(c, BUFF_SIZE, fp) != NULL) {
+      historyArray[i] = malloc(BUFF_SIZE*sizeof(char));
+      strcpy(historyArray[i], c);
+      i++;
 	 	}
 	 	fclose(fp);
 	}
@@ -461,23 +450,18 @@ void saveHistoryToFile() {
 
 	} else {
 		printf("FILE OPENED FOR READING\n");
-
-      if (historyCounter >= historySize){
-        commandNumber = historyCounter - historySize;
-        for(int i = historyArrayCounter; i < historySize; i++){
-          fprintf(fp, "%d ", commandNumber);
-          fprintf(fp, "%s\n", historyArray[i]);
-          commandNumber++;
-        }
+    fprintf(fp, "%d\n%d\n", historyCounter, historyArrayCounter);
+    if (historyCounter > historySize) {
+      for (int i = 0; i<historySize; i++) {
+        fprintf(fp, "%s", historyArray[i]);
       }
-
-      for(int i = 0; i < historyArrayCounter; i++){
-        fprintf(fp, "%d ", commandNumber);
-        fprintf(fp, "%s\n", historyArray[i]);
-        commandNumber++;
+  		fclose(fp);
+    } else {
+      for (int i = 0; i < historyCounter; i++) {
+        fprintf(fp, "%s", historyArray[i]);
       }
-		fclose(fp);
-
+  		fclose(fp);
+    }
 	}
 }
 
