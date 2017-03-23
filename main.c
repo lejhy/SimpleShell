@@ -475,7 +475,7 @@ int alias_exists(char *target_alias){
   return -1;
 }
 
-void printf_alias(){
+void print_alias(){
 
     int i = 0;
 
@@ -485,17 +485,17 @@ void printf_alias(){
     }
 
     while(i<alias_count){
-        printf("%scl: %s\n", aliases[i].alias, aliases[i].command);
+        printf("%s -> %s\n", aliases[i].alias, aliases[i].command);
         i++;
     }
 }
 
  void alias(int argc, char **argv){
-   
+
 // may need to add another argument to the alias function but unsure just now
 
     if (argc == 0){
-        printf_alias();
+        print_alias();
     }
     else{
     add_alias(argc, argv);
@@ -555,6 +555,29 @@ else if(pointer>=0){
 
 
 void unalias(int argc, char **argv){
+if(argc == 0){
+  printf("Error: No alias selected.\n");
+}
+else{
+  //if alias exists point = i, else = -1
+
+        int pointer = alias_exists(argv[0]);
+
+//remove alias from array
+        if(pointer >= 0){
+          for(int i = pointer+1; i<alias_count; i++){
+            strcpy(aliases[i-1].alias, aliases[i].alias);
+            strcpy(aliases[i-1].command, aliases[i].command);
+          }
+
+//decrement alias count
+          alias_count--;
+        }
+
+      else{
+        printf("Error: Alias does not exist.");
+      }
+    }
 
 }
 
