@@ -147,13 +147,13 @@ int main(int argc, char * *argv)
 				int command = atoi(buffer);
 				if (command < 0)
 				{
-					command = historyCounter + command - 1;
+					command = historyCounter + command + 1;
 				}
 
-				if (command >= 0 && command < historyCounter && command >= historyCounter - HISTORY_SIZE)
+				if (command > 0 && command <= historyCounter && command > historyCounter - HISTORY_SIZE)
 				{
 					command = command % HISTORY_SIZE;
-					strcpy(buffer, historyArray[command]);
+					strcpy(buffer, historyArray[command - 1]);
 				}
 				else
 				{
@@ -176,11 +176,14 @@ int main(int argc, char * *argv)
 		int aliasIndex = getAliasIndex(tokens[0]);
 		if (aliasIndex >= 0)
 		{
-			strcpy(buffer, aliases[aliasIndex].command);
+			char bufferReplacement[BUFF_SIZE];
+			strcpy(bufferReplacement, aliases[aliasIndex].command);
 			for (int i = 1; tokens[i] != NULL; i++)
 			{
-				strcat(buffer, tokens[i]);
+				strcat(bufferReplacement, " ");
+				strcat(bufferReplacement, tokens[i]);
 			}
+			strcpy(buffer, bufferReplacement);
 			tokens = tokenize(buffer);
 		}
 
@@ -332,7 +335,7 @@ void exitProgram(int argc, char * *argv)
 
 		if (setenv("PATH", path, 1) != -1)
 		{
-			printf("Seting path to: %s\n", path);
+			printf("Path succesfully restored. Current path:\n%s\n", getenv("PATH"));
 		}
 
 		exit(0);
@@ -394,12 +397,13 @@ void cd(int argc, char * *argv)
 		}
 		else
 		{
-			perror("Error");
+			perror(argv[0]);
 		}
 	}
 	else
 	{
-		printf("Error : Too many arguments!\n");
+		printf("Error: Invalid number of arguments!\n");
+		printf("Usage: cd directory\n");
 	}
 }
 
@@ -414,6 +418,7 @@ void getPath(int argc, char * *argv)
 	else
 	{
 		printf("Error: Invalid number of arguments!\n");
+		printf("Usage: getpath\n");
 	}
 }
 
@@ -431,6 +436,7 @@ void setPath(int argc, char * *argv)
 	else
 	{
 		printf("Error: Invalid number of arguments!\n");
+		printf("Usage: setpath path\n");
 	}
 }
 
@@ -439,10 +445,10 @@ void history(int argc, char * *argv)
 {
 	if (argc == 0)
 	{
-		int commandNumber = 0;
+		int commandNumber = 1;
 		if (historyCounter >= HISTORY_SIZE)
 		{
-			commandNumber = historyCounter - HISTORY_SIZE;
+			commandNumber = historyCounter - HISTORY_SIZE + 1;
 			for (int i = historyArrayCounter; i < HISTORY_SIZE; i++)
 			{
 				printf("%d: %s", commandNumber, historyArray[i]);
@@ -477,7 +483,7 @@ void loadHistoryFromFile()
 
 	if ( ( filePointer = fopen(filePath, "r") ) == NULL )
 	{
-		perror("failed to open stream");
+		printf("failed to open %s\n", fileName);
 	}
 	else
 	{
@@ -519,11 +525,10 @@ void saveHistoryToFile()
 
 	if (filePointer == NULL)
 	{
-		perror("failed to open stream");
+		printf("failed to open %s\n", fileName);
 	}
 	else
 	{
-		printf("FILE OPENED FOR READING\n");
 		fprintf(filePointer, "%d\n%d\n", historyCounter, historyArrayCounter);
 		if (historyCounter > HISTORY_SIZE)
 		{
@@ -591,7 +596,8 @@ void add_alias(int argc, char * *argv)
 	}
 	else if (aliasIndex >= 0)
 	{
-		printf("Error: You cannot add an alias to an existing alias \n");
+		printf("Updating an existing alias: %s\n", argv[0]);
+		update_alias(aliasIndex, argv);
 	}
 	else if (alias_count >= SIZE_OF_ALIASES)
 	{
@@ -649,7 +655,7 @@ void unalias(int argc, char * *argv)
 
 		int pointer = getAliasIndex(argv[0]);
 
-//remove alias from array
+		//remove alias from array
 		if (pointer >= 0)
 		{
 			for (int i = pointer + 1; i < alias_count; i++)
@@ -663,7 +669,7 @@ void unalias(int argc, char * *argv)
 		}
 		else
 		{
-			printf("Error: Alias does not exist.");
+			printf("Error: Alias %s does not exist.\n", argv[0]);
 		}
 	}
 }
@@ -674,7 +680,7 @@ void saveAliasesToFile()
 	FILE *filePointer;
 
 	// get the file loction in home directory
-	char *fileName = "/.alias_list";
+	char *fileName = "/.aliases";
 	char *homeDirectory = getenv("HOME");
 	char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
 	strcpy(filePath, homeDirectory);
@@ -684,11 +690,10 @@ void saveAliasesToFile()
 
 	if (filePointer == NULL)
 	{
-		perror("failed to open stream");
+		printf("failed to open %s\n", fileName);
 	}
 	else
 	{
-		printf("FILE OPENED FOR READING\n");
 		fprintf(filePointer, "%d\n", alias_count);
 		for (int i = 0; i < alias_count; i++)
 		{
@@ -706,16 +711,15 @@ void loadAliasesFromFile()
 	char c[BUFF_SIZE + 1];
 
 	// get the file loction in home directory
-	char *fileName = "/.alias_list";
-char *homeDi
-rectory = getenv("HOME");
+	char *fileName = "/.aliases";
+	char *homeDirectory = getenv("HOME");
 	char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
 	strcpy(filePath, homeDirectory);
 	strcat(filePath, fileName);
 
 	if ( ( filePointer = fopen(filePath, "r") ) == NULL )
 	{
-		perror("failed to open stream");
+		printf("failed to open %s\n", fileName);
 	}
 	else
 	{
