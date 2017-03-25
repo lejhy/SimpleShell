@@ -14,19 +14,11 @@
 char path[256];
 char directory[128];
 char previousDirectory[128];
-// make these variables global for now
-int count;
-char **files;
-int alias_count = 0;
-
 
 typedef struct{
     char * alias;
     char * command;
 } aliasElement;
-
-aliasElement aliases[size_of_aliases];
-
 
 void cd(int argc, char **argv);
 void getPath(int argc, char **argv);
@@ -41,14 +33,17 @@ void add_alias();
 void print_alias();
 void update_alias(int index, char **argv);
 int alias_exists(char *target_alias);
-
-
-
-// aux function
+void saveHistoryToFile();
+void loadHistoryFromFile();
+void updateHistory();
 void printdir(int argc, char **argv);
+int getDirectoryContents(const char *directory, char ***ls);
+//Returns all arguments in an array of strings. Last pointer of the array in set to null. If there are no arguments, only one element wide array with the last NULL pointer is returned
+char **tokenize(char* string);
+//Returns the index of the command
+int getCommandIndex(char* command);
 
-//List of built in commands in the shell
-//If the command is not here, it is either an external program or an error
+//List of built in commands in the shell. If the command is not here, it is either an external program or an error
 char *commands[] = {
 	"cd",
 	"getpath",
@@ -62,10 +57,6 @@ char *commands[] = {
 	"printdir",
 	NULL
 };
-
-
-
-
 
 //Pointers to those built in commands
 void (*functions[]) (int argc, char **argv) = {
@@ -81,19 +72,9 @@ void (*functions[]) (int argc, char **argv) = {
   printdir
 };
 
-//Returns the index of
-int getCommandIndex(char* command);
-
-//Returns all arguments in an array of strings
-//Last pointer of the array in set to null
-//If there are no arguments, only one element wide array with the last NULL pointer is returned
-char **tokenize(char* string);
-
-char printContents(const char *directory, char ***ls);
-void saveHistoryToFile();
-void loadHistoryFromFile();
-void updateHistory();
-
+// global variables
+aliasElement aliases[size_of_aliases];
+int alias_count = 0;
 char *historyArray[historySize];
 int historyCounter = 0;
 int historyArrayCounter = 0;
@@ -298,42 +279,6 @@ void exitProgram(int argc, char **argv) {
   }
 }
 
-
-//helper function to return the contents of current working directory
-char printContents(const char *directory, char ***ls) {
-    size_t count = 0;
-    size_t length = 0;
-    DIR *dp = NULL;
-    struct dirent *ep = NULL;
-
-    dp = opendir(directory);
-    if(NULL == dp) {
-        fprintf(stderr, "no such directory: '%s'", directory);
-        return 0;
-    }
-
-    *ls = NULL;
-    ep = readdir(dp);
-    while(NULL != ep){
-        count++;
-        ep = readdir(dp);
-    }
-
-    rewinddir(dp);
-    *ls = calloc(count, sizeof(char *));
-
-    count = 0;
-    ep = readdir(dp);
-    while(NULL != ep){
-        (*ls)[count++] = strdup(ep->d_name);
-        ep = readdir(dp);
-    }
-
-    closedir(dp);
-    return count;
-}
-
-
 //PLS DON'T OVERWITE THIS, WOJTEK
 //REALLY
 // or what?, Fraser
@@ -416,51 +361,64 @@ void history(int argc, char **argv){
 }
 
 void loadHistoryFromFile() {
-	FILE *fp;
+	FILE *filePointer;
 	char c[BUFF_SIZE+1];
 
-	if( (fp = fopen(".hist_list", "r")) == NULL){
+  // get the file loction in home directory
+  char *fileName = "/.hist_list";
+  char *homeDirectory = getenv("HOME");
+  char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
+  strcpy(filePath, homeDirectory);
+  strcat(filePath, fileName);
+  printf("%s%s%s", filePath, fileName, homeDirectory);
+	if( (filePointer = fopen(filePath, "r")) == NULL){
 		perror("failed to open stream");
 
 	} else {
-    if (fgets(c, BUFF_SIZE, fp) != NULL)
+    if (fgets(c, BUFF_SIZE, filePointer) != NULL)
       historyCounter = atoi(c);
-    if (fgets(c, BUFF_SIZE, fp) != NULL)
+    if (fgets(c, BUFF_SIZE, filePointer) != NULL)
       historyArrayCounter = atoi(c);
 
     int i = 0;
-		while(fgets(c, BUFF_SIZE, fp) != NULL) {
+		while(fgets(c, BUFF_SIZE, filePointer) != NULL) {
       historyArray[i] = malloc(BUFF_SIZE*sizeof(char));
       strcpy(historyArray[i], c);
       i++;
 	 	}
-	 	fclose(fp);
+	 	fclose(filePointer);
 	}
 }
 
 
 void saveHistoryToFile() {
-	FILE *fp;
-	int commandNumber = 1;
-	// history save to .hist_list in home directory
-	fp = fopen(".hist_list", "w+");
+	FILE *filePointer;
 
-	if (fp == NULL) {
+  // get the file loction in home directory
+  char *fileName = "/.hist_list";
+  char *homeDirectory = getenv("HOME");
+  char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
+  strcpy(filePath, homeDirectory);
+  strcat(filePath, fileName);
+
+	filePointer = fopen(filePath, "w+");
+  printf("%s%s%s", filePath, fileName, homeDirectory);
+	if (filePointer == NULL) {
 		perror("failed to open stream");
 
 	} else {
 		printf("FILE OPENED FOR READING\n");
-    fprintf(fp, "%d\n%d\n", historyCounter, historyArrayCounter);
+    fprintf(filePointer, "%d\n%d\n", historyCounter, historyArrayCounter);
     if (historyCounter > historySize) {
       for (int i = 0; i<historySize; i++) {
-        fprintf(fp, "%s", historyArray[i]);
+        fprintf(filePointer, "%s", historyArray[i]);
       }
-  		fclose(fp);
+  		fclose(filePointer);
     } else {
       for (int i = 0; i < historyCounter; i++) {
-        fprintf(fp, "%s", historyArray[i]);
+        fprintf(filePointer, "%s", historyArray[i]);
       }
-  		fclose(fp);
+  		fclose(filePointer);
     }
 	}
 }
@@ -553,7 +511,6 @@ else if(pointer>=0){
 
 }
 
-
 void unalias(int argc, char **argv){
 if(argc == 0){
   printf("Error: No alias selected.\n");
@@ -584,11 +541,46 @@ else{
 void printdir(int argc, char **argv){
 	int i;
 	if (argc == 0){
-		count = printContents(directory, &files);
+    char **content;
+		int count = getDirectoryContents(directory, &content);
 		for (i = 0; i < count; i++) {
-			printf("%s\n", files[i]);
+			printf("%s\n", content[i]);
 		}
 	} else {
 		printf("Erroer: No arguments required for this command to run!\n");
 	}
+}
+
+//helper function to return the contents of current working directory
+int getDirectoryContents(const char *directory, char ***content) {
+    size_t count = 0;
+    size_t length = 0;
+    DIR *directoryPointer = NULL;
+    struct dirent *entryPointer = NULL;
+
+    directoryPointer = opendir(directory);
+    if(NULL == directoryPointer) {
+        fprintf(stderr, "no such directory: '%s'", directory);
+        return 0;
+    }
+
+    *content = NULL;
+    entryPointer = readdir(directoryPointer);
+    while(NULL != entryPointer){
+        count++;
+        entryPointer = readdir(directoryPointer);
+    }
+
+    rewinddir(directoryPointer);
+    *content = calloc(count, sizeof(char *));
+
+    count = 0;
+    entryPointer = readdir(directoryPointer);
+    while(NULL != entryPointer){
+        (*content)[count++] = strdup(entryPointer->d_name);
+        entryPointer = readdir(directoryPointer);
+    }
+
+    closedir(directoryPointer);
+    return count;
 }
