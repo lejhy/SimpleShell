@@ -15,33 +15,33 @@ char path[256];
 char directory[128];
 char previousDirectory[128];
 
-typedef struct{
-    char * alias;
-    char * command;
+typedef struct {
+	char *alias;
+	char *command;
 } aliasElement;
 
-void cd(int argc, char **argv);
-void getPath(int argc, char **argv);
-void setPath(int argc, char **argv);
-void history(int argc, char **argv);
-void alias(int argc, char **argv);
-void unalias(int argc, char **argv);
-void help(int argc, char **argv);
-void print(int argc, char **argv);
-void exitProgram(int argc, char **argv);
+void cd(int argc, char * *argv);
+void getPath(int argc, char * *argv);
+void setPath(int argc, char * *argv);
+void history(int argc, char * *argv);
+void alias(int argc, char * *argv);
+void unalias(int argc, char * *argv);
+void help(int argc, char * *argv);
+void print(int argc, char * *argv);
+void exitProgram(int argc, char * *argv);
 void add_alias();
 void print_alias();
-void update_alias(int index, char **argv);
+void update_alias(int index, char * *argv);
 int alias_exists(char *target_alias);
 void saveHistoryToFile();
 void loadHistoryFromFile();
 void updateHistory();
-void printdir(int argc, char **argv);
-int getDirectoryContents(const char *directory, char ***ls);
+void printdir(int argc, char * *argv);
+int getDirectoryContents(const char *directory, char * * *ls);
 //Returns all arguments in an array of strings. Last pointer of the array in set to null. If there are no arguments, only one element wide array with the last NULL pointer is returned
-char **tokenize(char* string);
+char * *tokenize(char *string);
 //Returns the index of the command
-int getCommandIndex(char* command);
+int getCommandIndex(char *command);
 
 //List of built in commands in the shell. If the command is not here, it is either an external program or an error
 char *commands[] = {
@@ -59,17 +59,17 @@ char *commands[] = {
 };
 
 //Pointers to those built in commands
-void (*functions[]) (int argc, char **argv) = {
-  cd,
-  getPath,
-  setPath,
-  history,
-  alias,
-  unalias,
-  print,
-  help,
-  exitProgram,
-  printdir
+void(*functions[]) (int argc, char * *argv) = {
+	cd,
+	getPath,
+	setPath,
+	history,
+	alias,
+	unalias,
+	print,
+	help,
+	exitProgram,
+	printdir
 };
 
 // global variables
@@ -79,185 +79,239 @@ char *historyArray[historySize];
 int historyCounter = 0;
 int historyArrayCounter = 0;
 
-int main(int argc, char **argv)
+int main(int argc, char * *argv)
 {
-    char buffer[BUFF_SIZE];
-    char **tokens;
-    int functionIndex;
-    int argumentsIndex;
-    int commandIndex;
-    pid_t processID;
-		//int alias_size;
+	char buffer[BUFF_SIZE];
+	char * *tokens;
+	int functionIndex;
+	int argumentsIndex;
+	int commandIndex;
+	pid_t processID;
+	//int alias_size;
 
-		// dynamic memory allocation for structs
+	// dynamic memory allocation for structs
 	//	*aliases = malloc(alias_size * sizeof(aliasElement));
 
-		//get the paths of the current working directory and home directory
-		strcpy(path, getenv("PATH"));
-		strcpy(directory, getenv("HOME"));
-		chdir(directory);
+	//get the paths of the current working directory and home directory
+	strcpy( path, getenv("PATH") );
+	strcpy( directory, getenv("HOME") );
+	chdir(directory);
 
-    loadHistoryFromFile();
+	loadHistoryFromFile();
 
-		//Main loop
-	  while(1){
-	    printf("%s>", directory);
+	//Main loop
+	while (1)
+	{
+		printf("%s>", directory);
 
-	    //check for ctrl-D (EOF)
-	  	if (fgets(buffer, 512, stdin) == NULL) {
-				printf("\n");
-	  		exitProgram(0,0);
-	  	}
+		//check for ctrl-D (EOF)
+		if (fgets(buffer, 512, stdin) == NULL)
+		{
+			printf("\n");
+			exitProgram(0,0);
+		}
 
+		//check fo history
+		if (buffer[0] == '!')
+		{
+			if (strcmp(buffer, "!!\n") == 0)
+			{
+				if (historyCounter == 0)
+				{
+					printf("Error: Empty history!\n");
+					continue;
+				}
+				else if (historyArrayCounter == 0)
+				{
+					// pointer at the beginning, last one at the end
+					int lastCommand = historySize - 1;
+					strcpy(buffer, historyArray[lastCommand]);
+				}
+				else
+				{
+					int lastCommand = historyArrayCounter - 1;
+					strcpy(buffer, historyArray[lastCommand]);
+				}
+			}
+			else
+			{
+				// shift the buffer
+				int i = 1;
+				while (buffer[i] != '\0')
+				{
+					buffer[i - 1] = buffer[i];
+					i++;
+				}
 
+				buffer[i - 1] = '\0';
+				// convert to number
+				int command = atoi(buffer);
+				if (command < 0)
+				{
+					command = historyCounter + command - 1;
+				}
 
-			//check fo history
-			if (buffer[0] == '!') {
-				if (strcmp(buffer, "!!\n") == 0) {
-					if (historyCounter == 0) {
-						printf("Error: Empty history!\n");
-						continue;
-					} else if (historyArrayCounter == 0) {
-						// pointer at the beginning, last one at the end
-						int lastCommand = historySize - 1;
-						strcpy (buffer, historyArray[lastCommand]);
-					} else {
-						int lastCommand = historyArrayCounter - 1;
-						strcpy (buffer, historyArray[lastCommand]);
-					}
-				} else {
-					// shift the buffer
-					int i = 1;
-					while (buffer[i] != '\0') {
-						buffer[i-1] = buffer[i];
-						i++;
-					}
-					buffer[i-1] = '\0';
-					// convert to number
-					int command = atoi(buffer);
-					if (command < 0) {
-						command = historyCounter + command - 1;
-					}
-					if (command >= 0 && command < historyCounter && command >= historyCounter-historySize) {
-						command = command%historySize;
-						strcpy (buffer, historyArray[command]);
-					} else {
-						printf("Error: Bad command number!\n");
-						continue;
+				if (command >= 0 && command < historyCounter && command >= historyCounter - historySize)
+				{
+					command = command % historySize;
+					strcpy(buffer, historyArray[command]);
+				}
+				else
+				{
+					printf("Error: Bad command number!\n");
+					continue;
+				}
+			}
+		}
+		else if (buffer[0] != '\n')
+		{
+			historyArray[historyArrayCounter] = malloc( BUFF_SIZE * sizeof(char) );
+			strcpy(historyArray[historyArrayCounter], buffer);
+			historyCounter++;
+			historyArrayCounter = historyCounter % historySize;
+		}
+
+		tokens = tokenize(buffer);
+
+		// check for aliases
+		int aliasIndex = alias_exists(tokens[0]);
+		if (aliasIndex >= 0)
+		{
+			strcpy(buffer, aliases[aliasIndex].command);
+			tokens = tokenize(buffer);
+		}
+
+		argumentsIndex = 0;
+		while (tokens[argumentsIndex] != NULL)
+		{
+			argumentsIndex++;
+		}
+
+		if (argumentsIndex > 0)
+		{
+			commandIndex = getCommandIndex(tokens[0]);
+			if (commandIndex >= 0)
+			{
+				(functions[commandIndex])(argumentsIndex - 1, ++tokens);
+			}
+			else
+			{
+				processID = getpid();
+				fork();
+				if ( processID == getpid() )
+				{
+					//parent
+					wait(NULL);
+				}
+				else
+				{
+					//child
+					if (execvp(tokens[0], tokens) < 0)
+					{
+						perror(tokens[0]);
+						exit(0);
 					}
 				}
-			} else if (buffer[0] != '\n') {
-	      historyArray[historyArrayCounter] = malloc(BUFF_SIZE*sizeof(char));
-	      strcpy(historyArray[historyArrayCounter], buffer);
-	      historyCounter++;
-	      historyArrayCounter = historyCounter%historySize;
-	    }
+			}
+		}
+	}
 
-	      tokens = tokenize(buffer);
-
-        // check for aliases
-        int aliasIndex = alias_exists(tokens[0]);
-        if (aliasIndex >= 0){
-          strcpy(buffer, aliases[aliasIndex].command);
-            tokens = tokenize(buffer);
-        }
-
-	  		argumentsIndex = 0;
-	  		while (tokens[argumentsIndex] != NULL) {
-	  			argumentsIndex++;
-	  		}
-	          if (argumentsIndex > 0){
-	              commandIndex = getCommandIndex(tokens[0]);
-	              if (commandIndex >= 0){
-	                (functions[commandIndex]) (argumentsIndex - 1, ++tokens);
-	              } else {
-	                processID = getpid();
-	                fork();
-	                if(processID == getpid()){
-	                  //parent
-	                  wait(NULL);
-	                } else {
-	                  //child
-	                  if (execvp(tokens[0], tokens) < 0){
-											perror(tokens[0]);
-	                    exit(0);
-	                  }
-	                }
-	              }
-	          }
-	    }
-    return 0;
+	return 0;
 }
+
 
 //Checks whether the given string is a built in command
 //Returns the command index
 //Returns negative value if no match was found
-int getCommandIndex(char *command) {
+int getCommandIndex(char *command)
+{
 	int i = 0;
-	while (commands[i] != NULL) {
-		if (strcmp(command, commands[i]) == 0) {
+	while (commands[i] != NULL)
+	{
+		if (strcmp(command, commands[i]) == 0)
+		{
 			return i;
 		}
+
 		i++;
 	}
+
 	return -1;
 }
 
+
 //Splits the input into an array of strings and returns it as a pointer
-char **tokenize(char *string) {
+char * *tokenize(char *string)
+{
 	int index = 0;
 	int i;
 	int size = 8;
-	char **tokens = malloc(size * sizeof(char*));
-	char **tokensTemp;
+	char * *tokens = malloc( size * sizeof(char *) );
+	char * *tokensTemp;
 	//Get the first token
 	char *token = strtok(string, "[\n<>;|& \t]");
 	//Get all the remaining tokens
-	while (token != NULL) {
+	while (token != NULL)
+	{
 		tokens[index] = token;
 		token = strtok(NULL, "[\n<>;|& \t]");
 		index++;
 		//Checks whether more memory is needed and then allocates it
-		if (index == size - 1) {
+		if (index == size - 1)
+		{
 			tokensTemp = tokens;
-			tokens = malloc(2 * size * sizeof(char*));
-			for (i = 0; i < size; i++) {
+			tokens = malloc( 2 * size * sizeof(char *) );
+			for (i = 0; i < size; i++)
+			{
 				tokens[i] = tokensTemp[i];
 			}
+
 			free(tokensTemp);
 			size = size * 2;
 		}
 	}
+
 	//Last pointer is set to NULL and the pointer to the array is returned
 	tokens[index] = NULL;
 	return tokens;
 }
 
+
 //All the buid in commands should be declared here
-void help(int argc, char **argv) {
-  if (argc == 0){
-	  printf("Here is a list of commands available.\r\n");
-      int i =0;
-      for(i=0;i<10;i++){
-          char *pos = commands[i];
-          while(*pos != '\0'){
-            printf("- ");
+void help(int argc, char * *argv)
+{
+	if (argc == 0)
+	{
+		printf("Here is a list of commands available.\r\n");
+		int i = 0;
+		for (i = 0; i < 10; i++)
+		{
+			char *pos = commands[i];
+			while (*pos != '\0')
+			{
+				printf("- ");
 
-          while(*pos != '\0'){
-            printf("%c", *(pos++));
-              }
-            }
-                     printf("\n");
-                   }
-}
-      else {
-          printf("Invalid arguments");
-          }
+				while (*pos != '\0')
+				{
+					printf( "%c", *(pos++) );
+				}
+			}
+
+			printf("\n");
+		}
+	}
+	else
+	{
+		printf("Invalid arguments");
+	}
 }
 
-void print(int argc, char **argv) {
+
+void print(int argc, char * *argv)
+{
 	int i = 0;
-	for (i; i < argc;i++) {
+	for (i; i < argc; i++)
+	{
 		printf("'");
 		printf("%s", argv[i]);
 		printf("'");
@@ -265,322 +319,407 @@ void print(int argc, char **argv) {
 	}
 }
 
-void exitProgram(int argc, char **argv) {
-  if (argc == 0){
 
+void exitProgram(int argc, char * *argv)
+{
+	if (argc == 0)
+	{
 		saveHistoryToFile();
 
-		if (setenv("PATH", path, 1) != -1){
+		if (setenv("PATH", path, 1) != -1)
+		{
 			printf("Seting path to: %s\n", path);
-		};
-	  exit(0);
-  } else {
-    printf("Invalid arguments");
-  }
+		}
+
+		exit(0);
+	}
+	else
+	{
+		printf("Invalid arguments");
+	}
 }
+
 
 //PLS DON'T OVERWITE THIS, WOJTEK
 //REALLY
 // or what?, Fraser
 
-void cd(int argc, char **argv){
+void cd(int argc, char * *argv)
+{
 	char newDirectory[400];
 	int isSuccess;
 
 	//executes chdir(args) command depending on the type
 	//of arguments used, stores result in isSuccess
-	if (argc == 0){
-		isSuccess = chdir(getenv("HOME"));
+	if (argc == 0)
+	{
+		isSuccess = chdir( getenv("HOME") );
 		//if no problems with chdir
-		if(isSuccess == 0){
-			strcpy(previousDirectory, directory); //save old dir
-			getcwd(newDirectory,400);							//get cur dir
-			strcpy(directory,newDirectory);				//save cur dir
-		} else {
+		if (isSuccess == 0)
+		{
+			strcpy(previousDirectory, directory);             //save old dir
+			getcwd(newDirectory,400);             //get cur dir
+			strcpy(directory,newDirectory);             //save cur dir
+		}
+		else
+		{
 			perror("Error");
 		}
-	} else if(argc == 1) {
-		if(strcmp(*argv,"~") == 0 ) {
-			isSuccess = chdir(getenv("HOME"));
-		} else if(strcmp(*argv, "-") == 0) {
+	}
+	else if (argc == 1)
+	{
+		if (strcmp(*argv,"~") == 0 )
+		{
+			isSuccess = chdir( getenv("HOME") );
+		}
+		else if (strcmp(*argv, "-") == 0)
+		{
 			isSuccess = chdir(previousDirectory);
-		} else {
+		}
+		else
+		{
 			isSuccess = chdir(*argv);
 		}
+
 		//if no problems with chdir
-		if(isSuccess == 0){
-			strcpy(previousDirectory, directory); //save old dir
-			getcwd(newDirectory,400);							//get cur dir
-			strcpy(directory,newDirectory);				//save cur dir
-		} else {
+		if (isSuccess == 0)
+		{
+			strcpy(previousDirectory, directory);             //save old dir
+			getcwd(newDirectory,400);             //get cur dir
+			strcpy(directory,newDirectory);             //save cur dir
+		}
+		else
+		{
 			perror("Error");
 		}
-	} else {
+	}
+	else
+	{
 		printf("Error : Too many arguments!\n");
 	}
 }
 
+
 // print the path
-void getPath(int argc, char **argv){
-	if (argc == 0) {
-		printf("%s\n", getenv("PATH"));
-	} else {
+void getPath(int argc, char * *argv)
+{
+	if (argc == 0)
+	{
+		printf( "%s\n", getenv("PATH") );
+	}
+	else
+	{
 		printf("Error: Invalid number of arguments!\n");
 	}
 }
+
 
 // set the path
-void setPath(int argc, char **argv){
-	if (argc == 1) {
-		if (setenv("PATH", *argv, 1) == -1){
+void setPath(int argc, char * *argv)
+{
+	if (argc == 1)
+	{
+		if (setenv("PATH", *argv, 1) == -1)
+		{
 			perror("Error");
 		}
-	} else {
+	}
+	else
+	{
 		printf("Error: Invalid number of arguments!\n");
 	}
-
 }
 
-void history(int argc, char **argv){
-  if (argc == 0){
-    int commandNumber = 0;
-    if (historyCounter >= historySize){
-      commandNumber = historyCounter - historySize;
-      for(int i = historyArrayCounter; i < historySize; i++){
-        printf("%d: %s", commandNumber, historyArray[i]);
-        commandNumber++;
-      }
-    }
-	  for(int i = 0; i < historyArrayCounter; i++){
-      printf("%d: %s", commandNumber, historyArray[i]);
-      commandNumber++;
-    }
-  } else {
-    printf("Error: Invalid arguments\n");
-  }
-}
 
-void loadHistoryFromFile() {
-	FILE *filePointer;
-	char c[BUFF_SIZE+1];
+void history(int argc, char * *argv)
+{
+	if (argc == 0)
+	{
+		int commandNumber = 0;
+		if (historyCounter >= historySize)
+		{
+			commandNumber = historyCounter - historySize;
+			for (int i = historyArrayCounter; i < historySize; i++)
+			{
+				printf("%d: %s", commandNumber, historyArray[i]);
+				commandNumber++;
+			}
+		}
 
-  // get the file loction in home directory
-  char *fileName = "/.hist_list";
-  char *homeDirectory = getenv("HOME");
-  char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
-  strcpy(filePath, homeDirectory);
-  strcat(filePath, fileName);
-  printf("%s%s%s", filePath, fileName, homeDirectory);
-	if( (filePointer = fopen(filePath, "r")) == NULL){
-		perror("failed to open stream");
-
-	} else {
-    if (fgets(c, BUFF_SIZE, filePointer) != NULL)
-      historyCounter = atoi(c);
-    if (fgets(c, BUFF_SIZE, filePointer) != NULL)
-      historyArrayCounter = atoi(c);
-
-    int i = 0;
-		while(fgets(c, BUFF_SIZE, filePointer) != NULL) {
-      historyArray[i] = malloc(BUFF_SIZE*sizeof(char));
-      strcpy(historyArray[i], c);
-      i++;
-	 	}
-	 	fclose(filePointer);
+		for (int i = 0; i < historyArrayCounter; i++)
+		{
+			printf("%d: %s", commandNumber, historyArray[i]);
+			commandNumber++;
+		}
+	}
+	else
+	{
+		printf("Error: Invalid arguments\n");
 	}
 }
 
 
-void saveHistoryToFile() {
+void loadHistoryFromFile()
+{
+	FILE *filePointer;
+	char c[BUFF_SIZE + 1];
+
+	// get the file loction in home directory
+	char *fileName = "/.hist_list";
+	char *homeDirectory = getenv("HOME");
+	char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
+	strcpy(filePath, homeDirectory);
+	strcat(filePath, fileName);
+
+	if ( ( filePointer = fopen(filePath, "r") ) == NULL )
+	{
+		perror("failed to open stream");
+	}
+	else
+	{
+		if (fgets(c, BUFF_SIZE, filePointer) != NULL)
+		{
+			historyCounter = atoi(c);
+		}
+
+		if (fgets(c, BUFF_SIZE, filePointer) != NULL)
+		{
+			historyArrayCounter = atoi(c);
+		}
+
+		int i = 0;
+		while (fgets(c, BUFF_SIZE, filePointer) != NULL)
+		{
+			historyArray[i] = malloc( BUFF_SIZE * sizeof(char) );
+			strcpy(historyArray[i], c);
+			i++;
+		}
+
+		fclose(filePointer);
+	}
+}
+
+
+void saveHistoryToFile()
+{
 	FILE *filePointer;
 
-  // get the file loction in home directory
-  char *fileName = "/.hist_list";
-  char *homeDirectory = getenv("HOME");
-  char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
-  strcpy(filePath, homeDirectory);
-  strcat(filePath, fileName);
+	// get the file loction in home directory
+	char *fileName = "/.hist_list";
+	char *homeDirectory = getenv("HOME");
+	char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
+	strcpy(filePath, homeDirectory);
+	strcat(filePath, fileName);
 
 	filePointer = fopen(filePath, "w+");
-  printf("%s%s%s", filePath, fileName, homeDirectory);
-	if (filePointer == NULL) {
-		perror("failed to open stream");
 
-	} else {
+	if (filePointer == NULL)
+	{
+		perror("failed to open stream");
+	}
+	else
+	{
 		printf("FILE OPENED FOR READING\n");
-    fprintf(filePointer, "%d\n%d\n", historyCounter, historyArrayCounter);
-    if (historyCounter > historySize) {
-      for (int i = 0; i<historySize; i++) {
-        fprintf(filePointer, "%s", historyArray[i]);
-      }
-  		fclose(filePointer);
-    } else {
-      for (int i = 0; i < historyCounter; i++) {
-        fprintf(filePointer, "%s", historyArray[i]);
-      }
-  		fclose(filePointer);
-    }
+		fprintf(filePointer, "%d\n%d\n", historyCounter, historyArrayCounter);
+		if (historyCounter > historySize)
+		{
+			for (int i = 0; i < historySize; i++)
+			{
+				fprintf(filePointer, "%s", historyArray[i]);
+			}
+
+			fclose(filePointer);
+		}
+		else
+		{
+			for (int i = 0; i < historyCounter; i++)
+			{
+				fprintf(filePointer, "%s", historyArray[i]);
+			}
+
+			fclose(filePointer);
+		}
 	}
 }
 
-int alias_exists(char *target_alias){
 
-  for(int i = 0; i< alias_count; i++){
-    if(strcmp(aliases[i].alias, target_alias) == 0)
-    return i;
-  }
+int alias_exists(char *target_alias)
+{
+	for (int i = 0; i < alias_count; i++)
+	{
+		if (strcmp(aliases[i].alias, target_alias) == 0)
+		{
+			return i;
+		}
+	}
 
-  return -1;
+	return -1;
 }
 
-void print_alias(){
 
-    int i = 0;
+void print_alias()
+{
+	int i = 0;
+	if (alias_count == 0)
+	{
+		printf("Error: There are no aliases available to use!\n");
+	}
 
-
-    if(alias_count == 0){
-        printf("Error: There are no aliases available to use!\n");
-    }
-
-    while(i<alias_count){
-        printf("%s -> %s\n", aliases[i].alias, aliases[i].command);
-        i++;
-    }
+	while (i < alias_count)
+	{
+		printf("%s -> %s\n", aliases[i].alias, aliases[i].command);
+		i++;
+	}
 }
 
- void alias(int argc, char **argv){
 
-// may need to add another argument to the alias function but unsure just now
-
-    if (argc == 0){
-        print_alias();
-    }
-    else{
-    add_alias(argc, argv);
-     }
-
- }
-
-
- void add_alias(int argc, char **argv){
-
-   //creating a pointer to the location of the alias in the structure
-     int pointer = alias_exists(argv[0]);
-
-
-if (argv[1] == 0){
-  printf("Error: Invalid alias. Second argument missing.\n");
-  return;
-}
-else if(strcmp(argv[0], argv[1]) == 0){
-  printf("Error: both commands are the same.\n");
-  return;
+void alias(int argc, char * *argv)
+{
+	// may need to add another argument to the alias function but unsure just now
+	if (argc == 0)
+	{
+		print_alias();
+	}
+	else
+	{
+		add_alias(argc, argv);
+	}
 }
 
-else if(pointer>=0){
-    printf("Error: You cannot add an alias to an existing alias \n");
-  }
 
-    else{
+void add_alias(int argc, char * *argv)
+{
+	//creating a pointer to the location of the alias in the structure
+	int pointer = alias_exists(argv[0]);
+	if (argv[1] == 0)
+	{
+		printf("Error: Invalid alias. Second argument missing.\n");
+		return;
+	}
+	else if (strcmp(argv[0], argv[1]) == 0)
+	{
+		printf("Error: both commands are the same.\n");
+		return;
+	}
+	else if (pointer >= 0)
+	{
+		printf("Error: You cannot add an alias to an existing alias \n");
+	}
+	else
+	{
+		if (alias_count >= 10)
+		{
+			printf("Error: Alias list is already full\n");
+			return;
+		}
 
-       if(alias_count>=10){
-         printf("Error: Alias list is already full\n");
-         return;
-       }
-
-      update_alias(alias_count, argv);
-      alias_count++;
-
-      }
-  }
-
-
-
- void update_alias(int index, char **argv)
- {
-   aliases[index].alias = strdup(argv[0]);
-   int i=1;
-   aliases[index].command = malloc(sizeof(char)*BUFF_SIZE);
-   strcpy(aliases[index].command, "");
-
-   while(argv[i] != 0){
-     strcat(aliases[index].command, argv[i]);
-     strcat(aliases[index].command, "");
-     i++;
-   }
-
+		update_alias(alias_count, argv);
+		alias_count++;
+	}
 }
 
-void unalias(int argc, char **argv){
-if(argc == 0){
-  printf("Error: No alias selected.\n");
-}
-else{
-  //if alias exists point = i, else = -1
 
-        int pointer = alias_exists(argv[0]);
+void update_alias(int index, char * *argv)
+{
+	aliases[index].alias = strdup(argv[0]);
+	int i = 1;
+	aliases[index].command = malloc(sizeof(char) * BUFF_SIZE);
+	strcpy(aliases[index].command, "");
+
+	while (argv[i] != 0)
+	{
+		strcat(aliases[index].command, argv[i]);
+		strcat(aliases[index].command, "");
+		i++;
+	}
+}
+
+
+void unalias(int argc, char * *argv)
+{
+	if (argc == 0)
+	{
+		printf("Error: No alias selected.\n");
+	}
+	else
+	{
+		//if alias exists point = i, else = -1
+
+		int pointer = alias_exists(argv[0]);
 
 //remove alias from array
-        if(pointer >= 0){
-          for(int i = pointer+1; i<alias_count; i++){
-            strcpy(aliases[i-1].alias, aliases[i].alias);
-            strcpy(aliases[i-1].command, aliases[i].command);
-          }
+		if (pointer >= 0)
+		{
+			for (int i = pointer + 1; i < alias_count; i++)
+			{
+				strcpy(aliases[i - 1].alias, aliases[i].alias);
+				strcpy(aliases[i - 1].command, aliases[i].command);
+			}
 
 //decrement alias count
-          alias_count--;
-        }
-
-      else{
-        printf("Error: Alias does not exist.");
-      }
-    }
-
+			alias_count--;
+		}
+		else
+		{
+			printf("Error: Alias does not exist.");
+		}
+	}
 }
 
-void printdir(int argc, char **argv){
+
+void printdir(int argc, char * *argv)
+{
 	int i;
-	if (argc == 0){
-    char **content;
+	if (argc == 0)
+	{
+		char * *content;
 		int count = getDirectoryContents(directory, &content);
-		for (i = 0; i < count; i++) {
+		for (i = 0; i < count; i++)
+		{
 			printf("%s\n", content[i]);
 		}
-	} else {
+	}
+	else
+	{
 		printf("Erroer: No arguments required for this command to run!\n");
 	}
 }
 
+
 //helper function to return the contents of current working directory
-int getDirectoryContents(const char *directory, char ***content) {
-    size_t count = 0;
-    size_t length = 0;
-    DIR *directoryPointer = NULL;
-    struct dirent *entryPointer = NULL;
+int getDirectoryContents(const char *directory, char * * *content)
+{
+	size_t count = 0;
+	size_t length = 0;
+	DIR *directoryPointer = NULL;
+	struct dirent *entryPointer = NULL;
 
-    directoryPointer = opendir(directory);
-    if(NULL == directoryPointer) {
-        fprintf(stderr, "no such directory: '%s'", directory);
-        return 0;
-    }
+	directoryPointer = opendir(directory);
+	if (NULL == directoryPointer)
+	{
+		fprintf(stderr, "no such directory: '%s'", directory);
+		return 0;
+	}
 
-    *content = NULL;
-    entryPointer = readdir(directoryPointer);
-    while(NULL != entryPointer){
-        count++;
-        entryPointer = readdir(directoryPointer);
-    }
+	*content = NULL;
+	entryPointer = readdir(directoryPointer);
+	while (NULL != entryPointer)
+	{
+		count++;
+		entryPointer = readdir(directoryPointer);
+	}
 
-    rewinddir(directoryPointer);
-    *content = calloc(count, sizeof(char *));
+	rewinddir(directoryPointer);
+	*content = calloc( count, sizeof(char *) );
 
-    count = 0;
-    entryPointer = readdir(directoryPointer);
-    while(NULL != entryPointer){
-        (*content)[count++] = strdup(entryPointer->d_name);
-        entryPointer = readdir(directoryPointer);
-    }
+	count = 0;
+	entryPointer = readdir(directoryPointer);
+	while (NULL != entryPointer)
+	{
+		(*content)[count++] = strdup(entryPointer->d_name);
+		entryPointer = readdir(directoryPointer);
+	}
 
-    closedir(directoryPointer);
-    return count;
+	closedir(directoryPointer);
+	return count;
 }
