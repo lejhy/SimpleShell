@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #define BUFF_SIZE 512
-#define HISTRY_SIZE 20
+#define HISTORY_SIZE 20
 #define SIZE_OF_ALIASES 10
 
 char path[256];
@@ -77,7 +77,7 @@ void(*functions[]) (int argc, char * *argv) = {
 // global variables
 aliasElement aliases[SIZE_OF_ALIASES];
 int alias_count = 0;
-char *historyArray[HISTRY_SIZE];
+char *historyArray[HISTORY_SIZE];
 int historyCounter = 0;
 int historyArrayCounter = 0;
 
@@ -123,7 +123,7 @@ int main(int argc, char * *argv)
 				else if (historyArrayCounter == 0)
 				{
 					// pointer at the beginning, last one at the end
-					int lastCommand = HISTRY_SIZE - 1;
+					int lastCommand = HISTORY_SIZE - 1;
 					strcpy(buffer, historyArray[lastCommand]);
 				}
 				else
@@ -150,9 +150,9 @@ int main(int argc, char * *argv)
 					command = historyCounter + command - 1;
 				}
 
-				if (command >= 0 && command < historyCounter && command >= historyCounter - HISTRY_SIZE)
+				if (command >= 0 && command < historyCounter && command >= historyCounter - HISTORY_SIZE)
 				{
-					command = command % HISTRY_SIZE;
+					command = command % HISTORY_SIZE;
 					strcpy(buffer, historyArray[command]);
 				}
 				else
@@ -167,7 +167,7 @@ int main(int argc, char * *argv)
 			historyArray[historyArrayCounter] = malloc( BUFF_SIZE * sizeof(char) );
 			strcpy(historyArray[historyArrayCounter], buffer);
 			historyCounter++;
-			historyArrayCounter = historyCounter % HISTRY_SIZE;
+			historyArrayCounter = historyCounter % HISTORY_SIZE;
 		}
 
 		tokens = tokenize(buffer);
@@ -328,6 +328,7 @@ void exitProgram(int argc, char * *argv)
 	if (argc == 0)
 	{
 		saveHistoryToFile();
+		saveAliasesToFile();
 
 		if (setenv("PATH", path, 1) != -1)
 		{
@@ -439,10 +440,10 @@ void history(int argc, char * *argv)
 	if (argc == 0)
 	{
 		int commandNumber = 0;
-		if (historyCounter >= HISTRY_SIZE)
+		if (historyCounter >= HISTORY_SIZE)
 		{
-			commandNumber = historyCounter - HISTRY_SIZE;
-			for (int i = historyArrayCounter; i < HISTRY_SIZE; i++)
+			commandNumber = historyCounter - HISTORY_SIZE;
+			for (int i = historyArrayCounter; i < HISTORY_SIZE; i++)
 			{
 				printf("%d: %s", commandNumber, historyArray[i]);
 				commandNumber++;
@@ -524,9 +525,9 @@ void saveHistoryToFile()
 	{
 		printf("FILE OPENED FOR READING\n");
 		fprintf(filePointer, "%d\n%d\n", historyCounter, historyArrayCounter);
-		if (historyCounter > HISTRY_SIZE)
+		if (historyCounter > HISTORY_SIZE)
 		{
-			for (int i = 0; i < HISTRY_SIZE; i++)
+			for (int i = 0; i < HISTORY_SIZE; i++)
 			{
 				fprintf(filePointer, "%s", historyArray[i]);
 			}
@@ -607,11 +608,14 @@ void add_alias(int argc, char * *argv)
 
 int getAliasIndex(char *target_alias)
 {
-	for (int i = 0; i < alias_count; i++)
+	if (target_alias != NULL)
 	{
-		if (strcmp(aliases[i].alias, target_alias) == 0)
+		for (int i = 0; i < alias_count; i++)
 		{
-			return i;
+			if (strcmp(aliases[i].alias, target_alias) == 0)
+			{
+				return i;
+			}
 		}
 	}
 	return -1;
@@ -667,11 +671,84 @@ void unalias(int argc, char * *argv)
 
 void saveAliasesToFile()
 {
+	FILE *filePointer;
+
+	// get the file loction in home directory
+	char *fileName = "/.alias_list";
+	char *homeDirectory = getenv("HOME");
+	char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
+	strcpy(filePath, homeDirectory);
+	strcat(filePath, fileName);
+
+	filePointer = fopen(filePath, "w+");
+
+	if (filePointer == NULL)
+	{
+		perror("failed to open stream");
+	}
+	else
+	{
+		printf("FILE OPENED FOR READING\n");
+		fprintf(filePointer, "%d\n", alias_count);
+		for (int i = 0; i < alias_count; i++)
+		{
+			fprintf(filePointer, "%s\n%s\n", aliases[i].alias, aliases[i].command);
+		}
+
+		fclose(filePointer);
+	}
 }
 
 
 void loadAliasesFromFile()
 {
+	FILE *filePointer;
+	char c[BUFF_SIZE + 1];
+
+	// get the file loction in home directory
+	char *fileName = "/.alias_list";
+char *homeDi
+rectory = getenv("HOME");
+	char filePath[strlen(homeDirectory) + strlen(fileName) + 1];
+	strcpy(filePath, homeDirectory);
+	strcat(filePath, fileName);
+
+	if ( ( filePointer = fopen(filePath, "r") ) == NULL )
+	{
+		perror("failed to open stream");
+	}
+	else
+	{
+		if (fgets(c, BUFF_SIZE, filePointer) != NULL)
+		{
+			alias_count = atoi(c);
+		}
+
+		int i = 0;
+		while (fgets(c, BUFF_SIZE, filePointer) != NULL)
+		{
+			for (int i = 0; c[i] != '\0'; i++)
+			{
+				if (c[i] == '\n')
+				{
+					c[i] = '\0';
+				}
+			}
+			if (i%2 == 0)
+			{
+				aliases[i/2].alias = calloc(BUFF_SIZE, sizeof(char));
+				strcpy(aliases[i/2].alias, c);
+			}
+			else
+			{
+				aliases[i/2].command = calloc(BUFF_SIZE, sizeof(char));
+				strcpy(aliases[i/2].command, c);
+			}
+			i++;
+		}
+
+		fclose(filePointer);
+	}
 }
 
 
