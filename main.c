@@ -8,8 +8,8 @@
 #include <stdlib.h>
 
 #define BUFF_SIZE 512
-#define historySize 20
-#define size_of_aliases 10
+#define HISTRY_SIZE 20
+#define SIZE_OF_ALIASES 10
 
 char path[256];
 char directory[128];
@@ -32,7 +32,9 @@ void exitProgram(int argc, char * *argv);
 void add_alias();
 void print_alias();
 void update_alias(int index, char * *argv);
-int alias_exists(char *target_alias);
+int getAliasIndex(char *target_alias);
+void saveAliasesToFile();
+void loadAliasesFromFile();
 void saveHistoryToFile();
 void loadHistoryFromFile();
 void updateHistory();
@@ -73,24 +75,20 @@ void(*functions[]) (int argc, char * *argv) = {
 };
 
 // global variables
-aliasElement aliases[size_of_aliases];
+aliasElement aliases[SIZE_OF_ALIASES];
 int alias_count = 0;
-char *historyArray[historySize];
+char *historyArray[HISTRY_SIZE];
 int historyCounter = 0;
 int historyArrayCounter = 0;
 
 int main(int argc, char * *argv)
 {
 	char buffer[BUFF_SIZE];
-	char * *tokens;
+	char **tokens;
 	int functionIndex;
 	int argumentsIndex;
 	int commandIndex;
 	pid_t processID;
-	//int alias_size;
-
-	// dynamic memory allocation for structs
-	//	*aliases = malloc(alias_size * sizeof(aliasElement));
 
 	//get the paths of the current working directory and home directory
 	strcpy( path, getenv("PATH") );
@@ -98,6 +96,7 @@ int main(int argc, char * *argv)
 	chdir(directory);
 
 	loadHistoryFromFile();
+	loadAliasesFromFile();
 
 	//Main loop
 	while (1)
@@ -124,7 +123,7 @@ int main(int argc, char * *argv)
 				else if (historyArrayCounter == 0)
 				{
 					// pointer at the beginning, last one at the end
-					int lastCommand = historySize - 1;
+					int lastCommand = HISTRY_SIZE - 1;
 					strcpy(buffer, historyArray[lastCommand]);
 				}
 				else
@@ -151,9 +150,9 @@ int main(int argc, char * *argv)
 					command = historyCounter + command - 1;
 				}
 
-				if (command >= 0 && command < historyCounter && command >= historyCounter - historySize)
+				if (command >= 0 && command < historyCounter && command >= historyCounter - HISTRY_SIZE)
 				{
-					command = command % historySize;
+					command = command % HISTRY_SIZE;
 					strcpy(buffer, historyArray[command]);
 				}
 				else
@@ -168,16 +167,20 @@ int main(int argc, char * *argv)
 			historyArray[historyArrayCounter] = malloc( BUFF_SIZE * sizeof(char) );
 			strcpy(historyArray[historyArrayCounter], buffer);
 			historyCounter++;
-			historyArrayCounter = historyCounter % historySize;
+			historyArrayCounter = historyCounter % HISTRY_SIZE;
 		}
 
 		tokens = tokenize(buffer);
 
 		// check for aliases
-		int aliasIndex = alias_exists(tokens[0]);
+		int aliasIndex = getAliasIndex(tokens[0]);
 		if (aliasIndex >= 0)
 		{
 			strcpy(buffer, aliases[aliasIndex].command);
+			for (int i = 1; tokens[i] != NULL; i++)
+			{
+				strcat(buffer, tokens[i]);
+			}
 			tokens = tokenize(buffer);
 		}
 
@@ -241,13 +244,13 @@ int getCommandIndex(char *command)
 
 
 //Splits the input into an array of strings and returns it as a pointer
-char * *tokenize(char *string)
+char **tokenize(char *string)
 {
 	int index = 0;
 	int i;
 	int size = 8;
-	char * *tokens = malloc( size * sizeof(char *) );
-	char * *tokensTemp;
+	char **tokens = malloc( size * sizeof(char *) );
+	char **tokensTemp;
 	//Get the first token
 	char *token = strtok(string, "[\n<>;|& \t]");
 	//Get all the remaining tokens
@@ -436,10 +439,10 @@ void history(int argc, char * *argv)
 	if (argc == 0)
 	{
 		int commandNumber = 0;
-		if (historyCounter >= historySize)
+		if (historyCounter >= HISTRY_SIZE)
 		{
-			commandNumber = historyCounter - historySize;
-			for (int i = historyArrayCounter; i < historySize; i++)
+			commandNumber = historyCounter - HISTRY_SIZE;
+			for (int i = historyArrayCounter; i < HISTRY_SIZE; i++)
 			{
 				printf("%d: %s", commandNumber, historyArray[i]);
 				commandNumber++;
@@ -521,9 +524,9 @@ void saveHistoryToFile()
 	{
 		printf("FILE OPENED FOR READING\n");
 		fprintf(filePointer, "%d\n%d\n", historyCounter, historyArrayCounter);
-		if (historyCounter > historySize)
+		if (historyCounter > HISTRY_SIZE)
 		{
-			for (int i = 0; i < historySize; i++)
+			for (int i = 0; i < HISTRY_SIZE; i++)
 			{
 				fprintf(filePointer, "%s", historyArray[i]);
 			}
@@ -543,17 +546,20 @@ void saveHistoryToFile()
 }
 
 
-int alias_exists(char *target_alias)
+void alias(int argc, char * *argv)
 {
-	for (int i = 0; i < alias_count; i++)
+	if (argc == 0)
 	{
-		if (strcmp(aliases[i].alias, target_alias) == 0)
-		{
-			return i;
-		}
+		print_alias();
 	}
-
-	return -1;
+	else if (argc > 1)
+	{
+		add_alias(argc, argv);
+	}
+	else
+	{
+		printf("Error: Invalid alias. Second argument missing.\n");
+	}
 }
 
 
@@ -573,49 +579,42 @@ void print_alias()
 }
 
 
-void alias(int argc, char * *argv)
-{
-	// may need to add another argument to the alias function but unsure just now
-	if (argc == 0)
-	{
-		print_alias();
-	}
-	else
-	{
-		add_alias(argc, argv);
-	}
-}
-
-
 void add_alias(int argc, char * *argv)
 {
 	//creating a pointer to the location of the alias in the structure
-	int pointer = alias_exists(argv[0]);
-	if (argv[1] == 0)
-	{
-		printf("Error: Invalid alias. Second argument missing.\n");
-		return;
-	}
-	else if (strcmp(argv[0], argv[1]) == 0)
+	int aliasIndex = getAliasIndex(argv[0]);
+	if (strcmp(argv[0], argv[1]) == 0)
 	{
 		printf("Error: both commands are the same.\n");
 		return;
 	}
-	else if (pointer >= 0)
+	else if (aliasIndex >= 0)
 	{
 		printf("Error: You cannot add an alias to an existing alias \n");
 	}
+	else if (alias_count >= SIZE_OF_ALIASES)
+	{
+		printf("Error: Alias list is already full\n");
+		return;
+	}
 	else
 	{
-		if (alias_count >= 10)
-		{
-			printf("Error: Alias list is already full\n");
-			return;
-		}
-
 		update_alias(alias_count, argv);
 		alias_count++;
 	}
+}
+
+
+int getAliasIndex(char *target_alias)
+{
+	for (int i = 0; i < alias_count; i++)
+	{
+		if (strcmp(aliases[i].alias, target_alias) == 0)
+		{
+			return i;
+		}
+	}
+	return -1;
 }
 
 
@@ -623,13 +622,12 @@ void update_alias(int index, char * *argv)
 {
 	aliases[index].alias = strdup(argv[0]);
 	int i = 1;
-	aliases[index].command = malloc(sizeof(char) * BUFF_SIZE);
-	strcpy(aliases[index].command, "");
+	aliases[index].command = calloc(BUFF_SIZE, sizeof(char));
 
-	while (argv[i] != 0)
+	while (argv[i] != NULL)
 	{
 		strcat(aliases[index].command, argv[i]);
-		strcat(aliases[index].command, "");
+		strcat(aliases[index].command, " ");
 		i++;
 	}
 }
@@ -645,7 +643,7 @@ void unalias(int argc, char * *argv)
 	{
 		//if alias exists point = i, else = -1
 
-		int pointer = alias_exists(argv[0]);
+		int pointer = getAliasIndex(argv[0]);
 
 //remove alias from array
 		if (pointer >= 0)
@@ -656,7 +654,7 @@ void unalias(int argc, char * *argv)
 				strcpy(aliases[i - 1].command, aliases[i].command);
 			}
 
-//decrement alias count
+			//decrement alias count
 			alias_count--;
 		}
 		else
@@ -664,6 +662,16 @@ void unalias(int argc, char * *argv)
 			printf("Error: Alias does not exist.");
 		}
 	}
+}
+
+
+void saveAliasesToFile()
+{
+}
+
+
+void loadAliasesFromFile()
+{
 }
 
 
